@@ -36,7 +36,12 @@ public class EntityHandlerInterceptor {
 			handler.markAllModified();
 		}
 		
-		return method.invoke(handler.getOriginal(), arguments);
+		final var returnValue = method.invoke(handler.getOriginal(), arguments);
+		if (returnValue == handler.getOriginal()) {
+			return self;
+		}
+		
+		return returnValue;
 	}
 	
 }
