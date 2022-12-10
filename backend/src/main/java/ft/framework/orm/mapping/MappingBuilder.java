@@ -149,7 +149,7 @@ public class MappingBuilder {
 					.foreignKeyName(formatForeignKeyName(keyName, name))
 					.dataType(targetEntity.getTable().getIdColumn().getDataType());
 				
-				table.manyToOne(manyToOne.build());
+				columns.add(manyToOne.build());
 			} else {
 				final var dataTypeBuilder = DataType.builder()
 					.type(field.getType())
@@ -247,14 +247,14 @@ public class MappingBuilder {
 		}
 		
 		return Unique.builder()
-			.name(formatUniqueName(annotation.name(), tableName, columns))
-			.columns(columns)
+			.name(formatUniqueName(annotation.name(), tableName, filteredColumns))
+			.columns(filteredColumns)
 			.build();
 	}
 	
 	public List<Column> getColumnsByNames(List<Column> columns, String[] names) {
 		return Arrays.stream(names)
-			.map((column) -> getColumnByName(columns, column))
+			.map((name) -> getColumnByName(columns, name))
 			.toList();
 	}
 	

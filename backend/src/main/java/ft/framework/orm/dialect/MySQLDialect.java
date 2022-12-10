@@ -151,7 +151,7 @@ public class MySQLDialect implements Dialect {
 		
 		sql.append("CREATE TABLE `").append(table.getName()).append("`(\n");
 		
-		for (final var column : table.getAllColumns()) {
+		for (final var column : table.getColumns()) {
 			sql.append("\t`").append(column.getName()).append("` ").append(translate(column.getDataType()));
 			
 			if (!column.isNullable()) {

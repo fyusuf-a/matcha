@@ -218,7 +218,7 @@ public class EntityManager {
 	@SneakyThrows
 	public <T> Optional<T> findBy(Entity<T> entity, Predicate<T> predicate) {
 		final var table = entity.getTable();
-		final var columns = table.getAllColumns();
+		final var columns = table.getColumns();
 		
 		try (final var connection = dataSource.getPooledConnection().getConnection()) {
 			final var sql = dialect.buildSelectStatement(table, columns, predicate);
@@ -250,7 +250,7 @@ public class EntityManager {
 	@SneakyThrows
 	public <T> List<T> findAllBy(Entity<T> entity, Predicate<T> predicate) {
 		final var table = entity.getTable();
-		final var columns = table.getAllColumns();
+		final var columns = table.getColumns();
 		
 		try (final var connection = dataSource.getPooledConnection().getConnection()) {
 			final var sql = dialect.buildSelectStatement(table, columns, predicate, null);
@@ -280,7 +280,7 @@ public class EntityManager {
 	@SneakyThrows
 	public <T> Page<T> findAllBy(Entity<T> entity, Predicate<T> predicate, Pageable pageable) {
 		final var table = entity.getTable();
-		final var columns = table.getAllColumns();
+		final var columns = table.getColumns();
 		
 		try (final var connection = dataSource.getPooledConnection().getConnection()) {
 			final var content = new ArrayList<T>();
