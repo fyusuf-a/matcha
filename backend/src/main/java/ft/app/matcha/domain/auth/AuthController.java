@@ -61,10 +61,10 @@ public class AuthController {
 	}
 	
 	@PostMapping(path = "/confirm")
-	public void confirm(
+	public Tokens confirm(
 		@Body @Valid ConfirmForm form
 	) {
-		authService.confirm(form);
+		return authService.confirm(form);
 	}
 	
 }

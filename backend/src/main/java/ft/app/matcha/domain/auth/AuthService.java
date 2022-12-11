@@ -66,7 +66,7 @@ public class AuthService {
 		refreshTokenService.delete(refreshToken);
 	}
 	
-	public void confirm(ConfirmForm form) {
+	public Tokens confirm(ConfirmForm form) {
 		final var user = emailTokenService.validate(form.getToken())
 			.orElseThrow(InvalidConfirmTokenException::new);
 		
@@ -74,6 +74,8 @@ public class AuthService {
 			.setEmailConfirmed(true)
 			.setEmailConfirmedAt(LocalDateTime.now())
 		);
+		
+		return createTokens(user);
 	}
 	
 	public Tokens createTokens(User user) {
