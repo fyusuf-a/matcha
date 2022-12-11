@@ -19,6 +19,10 @@ public class JwtAuthenticationFilter extends AuthenticationFilter {
 		}
 		
 		final var user = jwtService.decode(jwt);
+		if (user == null) {
+			return null;
+		}
+		
 		return new UserAuthentication(user);
 	}
 	
