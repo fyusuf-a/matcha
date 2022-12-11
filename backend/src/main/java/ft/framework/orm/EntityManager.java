@@ -114,7 +114,7 @@ public class EntityManager {
 					proxied.getEntityHandler().reset();
 					return new Result<T>(instance, affectedRows, false);
 				} else {
-					final var converted = convert(entity, instance);
+					final var converted = convert(entity, instance, false);
 					return new Result<T>(converted, affectedRows, false);
 				}
 			}
@@ -174,7 +174,7 @@ public class EntityManager {
 			}
 		}
 		
-		return convert(entity, instance);
+		return convert(entity, instance, false);
 	}
 	
 	@SneakyThrows
@@ -214,7 +214,37 @@ public class EntityManager {
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SneakyThrows
+	public <T> Optional<T> findById(Entity<T> entity, Object id) {
+		final var table = entity.getTable();
+		final var columns = table.getColumns();
+		
+		try (final var connection = dataSource.getPooledConnection().getConnection()) {
+			final var sql = dialect.buildSelectByIdStatement(table, columns);
+			
+			log.trace("findById: {}", sql);
+			
+			try (final var statement = connection.prepareStatement(sql.toString())) {
+				statement.setObject(1, id);
+				
+				try (ResultSet resultSet = statement.executeQuery()) {
+					while (resultSet.next()) {
+						final T instance = read(entity.instantiate(), resultSet, columns);
+						final T converted = convert(entity, instance, false);
+						
+						if (resultSet.next()) {
+							throw new IllegalStateException("more item are available");
+						}
+						
+						return Optional.of(converted);
+					}
+					
+					return Optional.empty();
+				}
+			}
+		}
+	}
+	
 	@SneakyThrows
 	public <T> Optional<T> findBy(Entity<T> entity, Predicate<T> predicate) {
 		final var table = entity.getTable();
@@ -230,8 +260,8 @@ public class EntityManager {
 				
 				try (ResultSet resultSet = statement.executeQuery()) {
 					while (resultSet.next()) {
-						final T instance = read((T) entity.instantiate(), resultSet, columns);
-						final T converted = convert(entity, instance);
+						final T instance = read(entity.instantiate(), resultSet, columns);
+						final T converted = convert(entity, instance, false);
 						
 						if (resultSet.next()) {
 							throw new IllegalStateException("more item are available");
@@ -246,7 +276,6 @@ public class EntityManager {
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	@SneakyThrows
 	public <T> List<T> findAllBy(Entity<T> entity, Predicate<T> predicate) {
 		final var table = entity.getTable();
@@ -264,8 +293,8 @@ public class EntityManager {
 					final var instances = new ArrayList<T>();
 					
 					while (resultSet.next()) {
-						final T instance = read((T) entity.instantiate(), resultSet, columns);
-						final T converted = convert(entity, instance);
+						final T instance = read(entity.instantiate(), resultSet, columns);
+						final T converted = convert(entity, instance, false);
 						
 						instances.add(converted);
 					}
@@ -276,7 +305,6 @@ public class EntityManager {
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	@SneakyThrows
 	public <T> Page<T> findAllBy(Entity<T> entity, Predicate<T> predicate, Pageable pageable) {
 		final var table = entity.getTable();
@@ -296,8 +324,8 @@ public class EntityManager {
 					
 					try (ResultSet resultSet = statement.executeQuery()) {
 						while (resultSet.next()) {
-							final T instance = read((T) entity.instantiate(), resultSet, columns);
-							final T converted = convert(entity, instance);
+							final T instance = read(entity.instantiate(), resultSet, columns);
+							final T converted = convert(entity, instance, false);
 							
 							content.add(converted);
 						}
@@ -325,15 +353,16 @@ public class EntityManager {
 		}
 	}
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@SneakyThrows
 	public <T> T read(T instance, ResultSet resultSet, List<Column> columns) {
 		int index = 1;
 		for (final var column : columns) {
 			var value = resultSet.getObject(index++);
 			if (column instanceof ManyToOne manyToOne) {
-				final Entity<?> target = manyToOne.getTarget();
+				final Entity target = manyToOne.getTarget();
 				
-				value = target.instantiate(value);
+				value = convert(target, target.instantiate(value), true);
 			}
 			
 			column.write(instance, value);
@@ -343,8 +372,8 @@ public class EntityManager {
 	}
 	
 	@SneakyThrows
-	public <T> T convert(Entity<T> entity, T instance) {
-		final var handler = new EntityHandler(entity, instance);
+	public <T> T convert(Entity<T> entity, T instance, boolean lazy) {
+		final var handler = new EntityHandler(this, entity, instance, !lazy);
 		final var proxy = entity.getProxyClass()
 			.getDeclaredConstructor(EntityHandler.class)
 			.newInstance(handler);

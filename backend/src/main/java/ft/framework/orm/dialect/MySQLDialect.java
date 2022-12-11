@@ -302,6 +302,21 @@ public class MySQLDialect implements Dialect {
 	}
 	
 	@Override
+	public String buildSelectByIdStatement(Table table, Collection<Column> columns) {
+		return buildSelectFrom(table, columns)
+			.append(buildWhereId(table))
+			.toString();
+	}
+	
+	private String buildWhereId(Table table) {
+		return new StringBuilder()
+			.append(" WHERE ")
+			.append(quote(table.getIdColumn()))
+			.append(" = ?;")
+			.toString();
+	}
+	
+	@Override
 	public String buildSelectStatement(Table table, Collection<Column> columns) {
 		return buildSelectStatement(table, columns, null, null);
 	}
@@ -313,22 +328,7 @@ public class MySQLDialect implements Dialect {
 	
 	@Override
 	public String buildSelectStatement(Table table, Collection<Column> columns, Predicate<?> predicate, Pageable pageable) {
-		final var sql = new StringBuilder();
-		
-		sql.append("SELECT ");
-		
-		final var iterator = columns.iterator();
-		while (iterator.hasNext()) {
-			final var column = iterator.next();
-			
-			sql.append("`").append(column.getName()).append("`");
-			
-			if (iterator.hasNext()) {
-				sql.append(", ");
-			}
-		}
-		
-		sql.append(" FROM `").append(table.getName()).append("`");
+		final var sql = buildSelectFrom(table, columns);
 		
 		if (predicate != null) {
 			sql.append(buildWhere(predicate));
@@ -338,9 +338,9 @@ public class MySQLDialect implements Dialect {
 			sql.append(buildLimitAndOffset(pageable));
 		}
 		
-		sql.append(";");
-		
-		return sql.toString();
+		return sql
+			.append(";")
+			.toString();
 	}
 	
 	@Override
@@ -363,7 +363,15 @@ public class MySQLDialect implements Dialect {
 		return sql.toString();
 	}
 	
-	private Object buildLimitAndOffset(Pageable pageable) {
+	public StringBuilder buildSelectFrom(Table table, Collection<Column> columns) {
+		return new StringBuilder()
+			.append("SELECT ")
+			.append(quote(columns, false))
+			.append(" FROM ")
+			.append(quote(table));
+	}
+	
+	public Object buildLimitAndOffset(Pageable pageable) {
 		final var limit = pageable.getSize();
 		final var offset = pageable.getPage() * limit;
 		
@@ -402,7 +410,7 @@ public class MySQLDialect implements Dialect {
 		return "`%s` %s ?".formatted(comparison.getColumn().getName(), code);
 	}
 	
-	public String quote(List<? extends Named> nameds, boolean addParentheses) {
+	public String quote(Collection<? extends Named> nameds, boolean addParentheses) {
 		final var quoted = nameds.stream()
 			.map(this::quote)
 			.collect(Collectors.joining(", "));

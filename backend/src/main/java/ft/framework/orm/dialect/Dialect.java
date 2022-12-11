@@ -34,6 +34,8 @@ public interface Dialect {
 	
 	public String buildDeleteByIdStatement(Table table);
 	
+	public String buildSelectByIdStatement(Table table, Collection<Column> columns);
+	
 	public String buildSelectStatement(Table table, Collection<Column> columns);
 	
 	public String buildSelectStatement(Table table, Collection<Column> columns, Predicate<?> predicate);

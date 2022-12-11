@@ -25,9 +25,7 @@ public class Repository<T, ID> {
 	}
 	
 	public Optional<T> findById(ID id) {
-		final var predicate = builder.equals(entity.getTable().getIdColumn(), id);
-		
-		return findBy(predicate);
+		return entityManager.findById(entity, id);
 	}
 	
 	public T getById(ID id) {

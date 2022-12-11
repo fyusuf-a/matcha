@@ -26,6 +26,10 @@ public class EntityHandlerInterceptor {
 	) throws Exception {
 		final var methodName = method.getName();
 		
+		if (!handler.isInitialized()) {
+			handler.fetchLazy();
+		}
+		
 		if (methodName.startsWith("set")) {
 			final var fieldName = method.getName().substring(3);
 			
