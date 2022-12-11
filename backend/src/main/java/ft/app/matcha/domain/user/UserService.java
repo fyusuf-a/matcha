@@ -27,5 +27,9 @@ public class UserService {
 	public Optional<User> find(String login, String password) {
 		return repository.findByLoginAndPassword(login, password);
 	}
+
+	public User save(User user) {
+		return repository.save(user);
+	}
 	
 }

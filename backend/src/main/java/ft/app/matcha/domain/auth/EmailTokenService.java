@@ -2,6 +2,7 @@ package ft.app.matcha.domain.auth;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -49,7 +50,7 @@ public class EmailTokenService {
 		);
 	}
 	
-	public boolean validate(String plain) {
+	public Optional<User> validate(String plain) {
 		final var encoded = encode(plain);
 		final var token = repository.findByEncoded(encoded);
 		
@@ -61,7 +62,7 @@ public class EmailTokenService {
 			repository.delete(token_);
 		});
 		
-		return token.isPresent();
+		return token.map(EmailToken::getUser);
 	}
 	
 	@Scheduled(fixedDelay = 60, timeUnit = TimeUnit.SECONDS)

@@ -1,5 +1,7 @@
 package ft.app.matcha.domain.user;
 
+import java.time.LocalDateTime;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -47,5 +49,11 @@ public class User {
 	
 	@Column
 	private String bio;
+	
+	@Column(nullable = false)
+	private boolean emailConfirmed;
+	
+	@Column
+	private LocalDateTime emailConfirmedAt;
 	
 }

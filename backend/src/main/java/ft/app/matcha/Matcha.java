@@ -103,9 +103,9 @@ public class Matcha {
 			final var userService = new UserService(userRepository);
 			final var jwtService = new JwtService(userRepository, authConfiguration);
 			final var refreshTokenService = new RefreshTokenService(refreshTokenRepository, authConfiguration);
-			final var authService = new AuthService(userService, refreshTokenService, jwtService, eventPublisher);
-			final var notificationService = new NotificationService(notificationRepository);
 			final var emailTokenService = new EmailTokenService(emailTokenRepository, authConfiguration, emailSender, eventPublisher);
+			final var authService = new AuthService(userService, refreshTokenService, emailTokenService, jwtService, eventPublisher);
+			final var notificationService = new NotificationService(notificationRepository);
 			
 			final var services = Arrays.asList(new Object[] {
 				userService,

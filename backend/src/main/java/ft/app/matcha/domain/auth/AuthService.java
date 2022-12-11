@@ -1,11 +1,15 @@
 package ft.app.matcha.domain.auth;
 
+import java.time.LocalDateTime;
+
 import ft.app.matcha.domain.auth.event.LoginEvent;
 import ft.app.matcha.domain.auth.event.LogoutEvent;
 import ft.app.matcha.domain.auth.event.RefreshEvent;
 import ft.app.matcha.domain.auth.event.RegisterEvent;
+import ft.app.matcha.domain.auth.exception.InvalidConfirmTokenException;
 import ft.app.matcha.domain.auth.exception.InvalidRefreshTokenException;
 import ft.app.matcha.domain.auth.exception.WrongLoginOrPasswordException;
+import ft.app.matcha.domain.auth.model.ConfirmForm;
 import ft.app.matcha.domain.auth.model.LoginForm;
 import ft.app.matcha.domain.auth.model.LogoutForm;
 import ft.app.matcha.domain.auth.model.RefreshForm;
@@ -21,6 +25,7 @@ public class AuthService {
 	
 	private final UserService userService;
 	private final RefreshTokenService refreshTokenService;
+	private final EmailTokenService emailTokenService;
 	private final JwtService jwtService;
 	private final ApplicationEventPublisher eventPublisher;
 	
@@ -59,6 +64,16 @@ public class AuthService {
 		eventPublisher.publishEvent(new LogoutEvent(this, refreshToken));
 		
 		refreshTokenService.delete(refreshToken);
+	}
+	
+	public void confirm(ConfirmForm form) {
+		final var user = emailTokenService.validate(form.getToken())
+			.orElseThrow(InvalidConfirmTokenException::new);
+		
+		userService.save(user
+			.setEmailConfirmed(true)
+			.setEmailConfirmedAt(LocalDateTime.now())
+		);
 	}
 	
 	public Tokens createTokens(User user) {

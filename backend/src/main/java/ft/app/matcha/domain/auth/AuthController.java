@@ -1,5 +1,6 @@
 package ft.app.matcha.domain.auth;
 
+import ft.app.matcha.domain.auth.model.ConfirmForm;
 import ft.app.matcha.domain.auth.model.LoginForm;
 import ft.app.matcha.domain.auth.model.LogoutForm;
 import ft.app.matcha.domain.auth.model.RefreshForm;
@@ -57,6 +58,13 @@ public class AuthController {
 		@Body @Valid LogoutForm form
 	) {
 		authService.logout(form);
+	}
+	
+	@PostMapping(path = "/confirm")
+	public void confirm(
+		@Body @Valid ConfirmForm form
+	) {
+		authService.confirm(form);
 	}
 	
 }
