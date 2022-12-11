@@ -10,9 +10,12 @@ public class UserService {
 	
 	private final UserRepository repository;
 	
-	public User create(String login, String password) {
+	public User create(String firstName, String lastName, String email, String login, String password) {
 		try {
 			return repository.save(new User()
+				.setFirstName(firstName)
+				.setLastName(lastName)
+				.setEmail(email)
 				.setLogin(login)
 				.setPassword(password)
 			);

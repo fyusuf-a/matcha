@@ -8,6 +8,11 @@ import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 
 import ft.app.matcha.domain.auth.AuthController;
 import ft.app.matcha.domain.auth.AuthService;
+import ft.app.matcha.domain.auth.EmailConfiguration;
+import ft.app.matcha.domain.auth.EmailSender;
+import ft.app.matcha.domain.auth.EmailToken;
+import ft.app.matcha.domain.auth.EmailTokenRepository;
+import ft.app.matcha.domain.auth.EmailTokenService;
 import ft.app.matcha.domain.auth.JwtService;
 import ft.app.matcha.domain.auth.RefreshToken;
 import ft.app.matcha.domain.auth.RefreshTokenRepository;
@@ -22,6 +27,8 @@ import ft.app.matcha.domain.user.UserController;
 import ft.app.matcha.domain.user.UserRepository;
 import ft.app.matcha.domain.user.UserService;
 import ft.app.matcha.security.JwtAuthenticationFilter;
+import ft.framework.convert.service.ConvertionService;
+import ft.framework.convert.service.SimpleConvertionService;
 import ft.framework.event.ApplicationEventPublisher;
 import ft.framework.event.listener.EventListenerFactory;
 import ft.framework.mvc.MvcConfiguration;
@@ -41,11 +48,16 @@ import ft.framework.orm.EntityManager;
 import ft.framework.orm.OrmConfiguration;
 import ft.framework.orm.dialect.MySQLDialect;
 import ft.framework.orm.mapping.MappingBuilder;
+import ft.framework.property.PropertyBinder;
+import ft.framework.property.resolver.EnvironmentPropertyResolver;
 import ft.framework.schedule.ScheduledFactory;
 import ft.framework.schedule.impl.WispTaskScheduler;
 import ft.framework.swagger.SwaggerBuilder;
 import ft.framework.swagger.controller.SwaggerController;
 import ft.framework.trace.filter.LoggingFilter;
+import ft.framework.validation.Validator;
+import ft.framework.validation.ViolationException;
+import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.security.Keys;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -58,57 +70,91 @@ public class Matcha {
 	
 	@SneakyThrows
 	public static void main(String[] args) {
-		final var key = Keys.hmacShaKeyFor("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx".getBytes());
+		try {
+			Dotenv.configure()
+				.systemProperties()
+				.ignoreIfMissing()
+				.load();
+			
+			final var key = Keys.hmacShaKeyFor("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx".getBytes());
+			
+			final var validator = new Validator();
+			final var convertionService = new SimpleConvertionService();
+			
+			final var propertyBinder = PropertyBinder.builder()
+				.validator(validator)
+				.convertionService(convertionService)
+				.resolver(new EnvironmentPropertyResolver())
+				.build();
+			
+			final var emailConfiguration = propertyBinder.bind(new EmailConfiguration());
+			
+			final var ormConfiguration = configureOrm(User.class, RefreshToken.class, Notification.class, Like.class, EmailToken.class);
+			
+			final var eventPublisher = new ApplicationEventPublisher();
+			final var taskScheduler = new WispTaskScheduler();
+			
+			final var userRepository = new UserRepository(ormConfiguration.getEntityManager());
+			final var refreshTokenRepository = new RefreshTokenRepository(ormConfiguration.getEntityManager());
+			final var notificationRepository = new NotificationRepository(ormConfiguration.getEntityManager());
+			final var emailTokenRepository = new EmailTokenRepository(ormConfiguration.getEntityManager());
+			
+			final var emailSender = new EmailSender(emailConfiguration);
+			
+			final var userService = new UserService(userRepository);
+			final var jwtService = new JwtService(key, userRepository);
+			final var refreshTokenService = new RefreshTokenService(refreshTokenRepository);
+			final var authService = new AuthService(userService, refreshTokenService, jwtService, eventPublisher);
+			final var notificationService = new NotificationService(notificationRepository);
+			final var emailTokenService = new EmailTokenService(emailTokenRepository, emailSender, eventPublisher);
+			
+			final var services = Arrays.asList(new Object[] {
+				userService,
+				jwtService,
+				refreshTokenService,
+				authService,
+				notificationService,
+				emailTokenService,
+			});
+			
+			final var eventListenerFactory = new EventListenerFactory(eventPublisher);
+			services.forEach(eventListenerFactory::scan);
+			
+			final var scheduledFactory = new ScheduledFactory(taskScheduler);
+			services.forEach(scheduledFactory::scan);
+			
+			final var mvcConfiguration = configureMvc(validator, convertionService, jwtService);
+			final var routeRegistry = new RouteRegistry(mvcConfiguration);
+			
+			routeRegistry.add(new AuthController(authService));
+			routeRegistry.add(new PictureController());
+			routeRegistry.add(new UserController(userRepository));
+			
+			final var swagger = new OpenAPI()
+				.schemaRequirement("JWT", new SecurityScheme()
+					.type(SecurityScheme.Type.HTTP)
+					.scheme("bearer")
+					.bearerFormat("JWT"))
+				.info(new Info()
+					.title("Matcha")
+					.version("1.0"));
+			
+			SwaggerBuilder.build(swagger, routeRegistry.getRoutes());
+			routeRegistry.add(new SwaggerController(swagger));
+			
+			routeRegistry.markReady();
+		} catch (ViolationException exception) {
+			final var violations = exception.getViolations();
+			
+			for (final var violation : violations) {
+				log.error("{}: {}", violation.getPropertyPath(), violation.getMessage());
+			}
+			
+			System.exit(1);
+		} catch (Exception exception) {
+			System.exit(1);
+		}
 		
-		final var ormConfiguration = configureOrm(User.class, RefreshToken.class, Notification.class, Like.class);
-		
-		final var eventPublisher = new ApplicationEventPublisher();
-		final var taskScheduler = new WispTaskScheduler();
-		
-		final var userRepository = new UserRepository(ormConfiguration.getEntityManager());
-		final var refreshTokenRepository = new RefreshTokenRepository(ormConfiguration.getEntityManager());
-		final var notificationRepository = new NotificationRepository(ormConfiguration.getEntityManager());
-		
-		final var userService = new UserService(userRepository);
-		final var jwtService = new JwtService(key, userRepository);
-		final var refreshTokenService = new RefreshTokenService(refreshTokenRepository);
-		final var authService = new AuthService(userService, refreshTokenService, jwtService, eventPublisher);
-		final var notificationService = new NotificationService(notificationRepository);
-		
-		final var services = Arrays.asList(new Object[] {
-			userService,
-			jwtService,
-			refreshTokenService,
-			authService,
-			notificationService,
-		});
-		
-		final var eventListenerFactory = new EventListenerFactory(eventPublisher);
-		services.forEach(eventListenerFactory::scan);
-		
-		final var scheduledFactory = new ScheduledFactory(taskScheduler);
-		services.forEach(scheduledFactory::scan);
-		
-		final var mvcConfiguration = configureMvc(jwtService);
-		final var routeRegistry = new RouteRegistry(mvcConfiguration);
-		
-		routeRegistry.add(new AuthController(authService));
-		routeRegistry.add(new PictureController());
-		routeRegistry.add(new UserController(userRepository));
-		
-		final var swagger = new OpenAPI()
-			.schemaRequirement("JWT", new SecurityScheme()
-				.type(SecurityScheme.Type.HTTP)
-				.scheme("bearer")
-				.bearerFormat("JWT"))
-			.info(new Info()
-				.title("Matcha")
-				.version("1.0"));
-		
-		SwaggerBuilder.build(swagger, routeRegistry.getRoutes());
-		routeRegistry.add(new SwaggerController(swagger));
-		
-		routeRegistry.markReady();
 	}
 	
 	@SneakyThrows
@@ -155,7 +201,7 @@ public class Matcha {
 	}
 	
 	@SneakyThrows
-	public static MvcConfiguration configureMvc(JwtService jwtService) {
+	public static MvcConfiguration configureMvc(Validator validator, ConvertionService conversionService, JwtService jwtService) {
 		log.info("Waking up");
 		
 		final var objectMapper = new ObjectMapper()
@@ -163,6 +209,8 @@ public class Matcha {
 		
 		return MvcConfiguration.builder()
 			.objectMapper(objectMapper)
+			.validator(validator)
+			.conversionService(conversionService)
 			.httpMessageConversionService(
 				SimpleHttpMessageConversionService.builder()
 					.converter(new InputStreamHttpMessageConverter())

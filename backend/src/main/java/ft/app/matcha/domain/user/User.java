@@ -22,6 +22,7 @@ public class User {
 	
 	public static final int LOGIN_MIN_LENGTH = 3;
 	public static final int LOGIN_MAX_LENGTH = 48;
+	public static final int EMAIL_MAX_LENGTH = 128;
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,6 +34,16 @@ public class User {
 	@Column(nullable = false)
 	@JsonIgnore
 	private String password;
+	
+	@Column(nullable = false)
+	@JsonIgnore
+	private String email;
+	
+	@Column(nullable = false)
+	private String firstName;
+	
+	@Column(nullable = false)
+	private String lastName;
 	
 	@Column
 	private String bio;

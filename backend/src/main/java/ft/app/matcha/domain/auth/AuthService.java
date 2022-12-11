@@ -36,7 +36,7 @@ public class AuthService {
 	
 	public Tokens register(RegisterForm form) {
 		final var password = encode(form.getPassword());
-		final var user = userService.create(form.getLogin(), password);
+		final var user = userService.create(form.getFirstName(), form.getLastName(), form.getEmail(), form.getLogin(), password);
 		
 		eventPublisher.publishEvent(new RegisterEvent(this, user));
 		
@@ -51,7 +51,7 @@ public class AuthService {
 		
 		return createTokens(refreshToken);
 	}
-
+	
 	public void logout(LogoutForm form) {
 		final var refreshToken = refreshTokenService.find(form.getRefreshToken())
 			.orElseThrow(InvalidRefreshTokenException::new);
