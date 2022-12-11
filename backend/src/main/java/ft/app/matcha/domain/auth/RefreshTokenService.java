@@ -14,17 +14,22 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class RefreshTokenService {
 	
-	public static final int LENGTH = 128;
-	public static final Duration EXPIRATION = Duration.ofDays(7);
-	
 	private final RefreshTokenRepository repository;
+	private final int length;
+	private final Duration expiration;
+	
+	public RefreshTokenService(RefreshTokenRepository repository, AuthConfiguration configuration) {
+		this.repository = repository;
+		this.length = configuration.getRefreshTokenLength();
+		this.expiration = configuration.getRefreshTokenExpiration();
+	}
 	
 	public RefreshToken create(User user) {
-		final var plain = RandomStringUtils.randomAlphanumeric(LENGTH);
+		final var plain = RandomStringUtils.randomAlphanumeric(length);
 		final var encoded = encode(plain);
 		
 		final var createdAt = LocalDateTime.now();
-		final var expiredAt = createdAt.plus(EXPIRATION);
+		final var expiredAt = createdAt.plus(expiration);
 		
 		return repository.save(new RefreshToken()
 			.setUser(user)

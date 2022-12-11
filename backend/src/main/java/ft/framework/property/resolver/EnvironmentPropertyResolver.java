@@ -10,6 +10,11 @@ import org.apache.commons.lang3.StringUtils;
 public class EnvironmentPropertyResolver implements PropertyResolver {
 	
 	@Override
+	public String getName() {
+		return "environment variable";
+	}
+	
+	@Override
 	public Optional<String> resolve(List<String> paths) {
 		final var key = toKey(paths);
 		

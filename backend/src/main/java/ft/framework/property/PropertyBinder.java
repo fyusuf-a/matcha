@@ -20,7 +20,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Singular;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Builder
 public class PropertyBinder {
 	
@@ -70,11 +72,20 @@ public class PropertyBinder {
 	}
 	
 	public Optional<String> resolve(List<String> paths) {
-		return resolvers.stream()
-			.map((resolver) -> resolver.resolve(paths))
-			.dropWhile(Optional::isEmpty)
-			.findFirst()
-			.orElse(Optional.empty());
+		for (final var resolver : resolvers) {
+			final var value = resolver.resolve(paths);
+			
+			if (value.isPresent()) {
+				if (log.isDebugEnabled()) {
+					final var joined = String.join(".", paths);
+					log.trace("Bound {} from {}", joined, resolver.getName());
+				}
+				
+				return value;
+			}
+		}
+		
+		return Optional.empty();
 	}
 	
 	public static List<String> extractPrefix(Class<?> clazz) {

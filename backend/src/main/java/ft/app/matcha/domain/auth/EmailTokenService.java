@@ -17,21 +17,28 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EmailTokenService {
 	
-	public static final int LENGTH = 128;
-	public static final Duration EXPIRATION = Duration.ofDays(1);
-	
 	private final EmailTokenRepository repository;
+	private final int length;
+	private final Duration expiration;
 	private final EmailSender emailSender;
 	private final ApplicationEventPublisher eventPublisher;
+	
+	public EmailTokenService(EmailTokenRepository repository, AuthConfiguration configuration, EmailSender emailSender, ApplicationEventPublisher eventPublisher) {
+		this.repository = repository;
+		this.length = configuration.getRefreshTokenLength();
+		this.expiration = configuration.getRefreshTokenExpiration();
+		this.emailSender = emailSender;
+		this.eventPublisher = eventPublisher;
+	}
 	
 	public EmailToken create(User user) {
 		repository.deleteAllByUser(user);
 		
-		final var plain = RandomStringUtils.randomAlphanumeric(LENGTH);
+		final var plain = RandomStringUtils.randomAlphanumeric(length);
 		final var encoded = encode(plain);
 		
 		final var createdAt = LocalDateTime.now();
-		final var expiredAt = createdAt.plus(EXPIRATION);
+		final var expiredAt = createdAt.plus(expiration);
 		
 		return repository.save(new EmailToken()
 			.setUser(user)

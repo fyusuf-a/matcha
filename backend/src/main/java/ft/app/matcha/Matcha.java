@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 
+import ft.app.matcha.domain.auth.AuthConfiguration;
 import ft.app.matcha.domain.auth.AuthController;
 import ft.app.matcha.domain.auth.AuthService;
 import ft.app.matcha.domain.auth.EmailConfiguration;
@@ -58,7 +59,6 @@ import ft.framework.trace.filter.LoggingFilter;
 import ft.framework.validation.Validator;
 import ft.framework.validation.ViolationException;
 import io.github.cdimascio.dotenv.Dotenv;
-import io.jsonwebtoken.security.Keys;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityScheme;
@@ -76,8 +76,6 @@ public class Matcha {
 				.ignoreIfMissing()
 				.load();
 			
-			final var key = Keys.hmacShaKeyFor("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx".getBytes());
-			
 			final var validator = new Validator();
 			final var convertionService = new SimpleConvertionService();
 			
@@ -87,6 +85,7 @@ public class Matcha {
 				.resolver(new EnvironmentPropertyResolver())
 				.build();
 			
+			final var authConfiguration = propertyBinder.bind(new AuthConfiguration());
 			final var emailConfiguration = propertyBinder.bind(new EmailConfiguration());
 			
 			final var ormConfiguration = configureOrm(User.class, RefreshToken.class, Notification.class, Like.class, EmailToken.class);
@@ -102,11 +101,11 @@ public class Matcha {
 			final var emailSender = new EmailSender(emailConfiguration);
 			
 			final var userService = new UserService(userRepository);
-			final var jwtService = new JwtService(key, userRepository);
-			final var refreshTokenService = new RefreshTokenService(refreshTokenRepository);
+			final var jwtService = new JwtService(userRepository, authConfiguration);
+			final var refreshTokenService = new RefreshTokenService(refreshTokenRepository, authConfiguration);
 			final var authService = new AuthService(userService, refreshTokenService, jwtService, eventPublisher);
 			final var notificationService = new NotificationService(notificationRepository);
-			final var emailTokenService = new EmailTokenService(emailTokenRepository, emailSender, eventPublisher);
+			final var emailTokenService = new EmailTokenService(emailTokenRepository, authConfiguration, emailSender, eventPublisher);
 			
 			final var services = Arrays.asList(new Object[] {
 				userService,
@@ -144,17 +143,18 @@ public class Matcha {
 			
 			routeRegistry.markReady();
 		} catch (ViolationException exception) {
-			final var violations = exception.getViolations();
+			log.error("A model could not be validated", exception);
 			
+			final var violations = exception.getViolations();
 			for (final var violation : violations) {
 				log.error("{}: {}", violation.getPropertyPath(), violation.getMessage());
 			}
 			
 			System.exit(1);
 		} catch (Exception exception) {
+			log.error("Could start the server", exception);
 			System.exit(1);
 		}
-		
 	}
 	
 	@SneakyThrows

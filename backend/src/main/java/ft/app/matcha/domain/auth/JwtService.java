@@ -11,16 +11,20 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
-import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor
 public class JwtService {
 	
-	public static final Duration EXPIRATION = Duration.ofMinutes(15);
-	
-	private final Key key;
 	private final UserRepository userRepository;
+	private final Key key;
+	private final Duration expiration;
+	
+	public JwtService(UserRepository userRepository, AuthConfiguration configuration) {
+		this.userRepository = userRepository;
+		this.key = Keys.hmacShaKeyFor(configuration.getJwtSecret().getBytes());
+		this.expiration = configuration.getJwtExpiration();
+	}
 	
 	public String generate(User user) {
 		final var now = new Date();
@@ -29,7 +33,7 @@ public class JwtService {
 			.setHeaderParam("typ", "JWT")
 			.setSubject(String.valueOf(user.getId()))
 			.setIssuedAt(now)
-			.setExpiration(new Date(now.getTime() + EXPIRATION.toMillis()))
+			.setExpiration(new Date(now.getTime() + expiration.toMillis()))
 			.signWith(key, SignatureAlgorithm.HS256)
 			.compact();
 	}
