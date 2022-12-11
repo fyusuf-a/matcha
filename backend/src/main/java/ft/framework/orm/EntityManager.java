@@ -413,7 +413,12 @@ public class EntityManager {
 	@SneakyThrows
 	public void applyPredicate(PreparedStatement statement, Predicate<?> predicate, int[] index) {
 		if (predicate instanceof Comparison<?> comparison) {
-			statement.setObject(index[0]++, comparison.getValue(), MysqlType.VARCHAR /* TODO */);
+			var value = comparison.getValue();
+			if (value instanceof ProxiedEntity proxied) {
+				value = proxied.getEntityHandler().getId();
+			}
+			
+			statement.setObject(index[0]++, value, MysqlType.VARCHAR /* TODO */);
 		} else if (predicate instanceof Branch<?> branch) {
 			for (final Predicate<?> child : branch.getPredicates()) {
 				applyPredicate(statement, child, index);

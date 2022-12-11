@@ -20,6 +20,10 @@ public class EntityHandler {
 		this.modifiedColumns = new HashSet<>(entity.getTable().getColumnCount());
 	}
 	
+	public Object getId() {
+		return entity.getTable().getIdColumn().read(original);
+	}
+	
 	public void reset() {
 		this.modifiedColumns.clear();
 	}
