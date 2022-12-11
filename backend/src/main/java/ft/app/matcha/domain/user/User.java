@@ -9,6 +9,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Data;
@@ -54,6 +55,7 @@ public class User {
 	private boolean emailConfirmed;
 	
 	@Column
+	@JsonFormat(shape = JsonFormat.Shape.STRING)
 	private LocalDateTime emailConfirmedAt;
 	
 }

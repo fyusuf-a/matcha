@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 
 import ft.app.matcha.domain.auth.AuthConfiguration;
@@ -76,6 +77,10 @@ public class Matcha {
 				.ignoreIfMissing()
 				.load();
 			
+			final var objectMapper = new ObjectMapper()
+				.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+				.registerModule(new JavaTimeModule());
+			
 			final var validator = new Validator();
 			final var convertionService = new SimpleConvertionService();
 			
@@ -122,7 +127,7 @@ public class Matcha {
 			final var scheduledFactory = new ScheduledFactory(taskScheduler);
 			services.forEach(scheduledFactory::scan);
 			
-			final var mvcConfiguration = configureMvc(validator, convertionService, jwtService);
+			final var mvcConfiguration = configureMvc(objectMapper, validator, convertionService, jwtService);
 			final var routeRegistry = new RouteRegistry(mvcConfiguration);
 			
 			routeRegistry.add(new AuthController(authService));
@@ -201,11 +206,8 @@ public class Matcha {
 	}
 	
 	@SneakyThrows
-	public static MvcConfiguration configureMvc(Validator validator, ConvertionService conversionService, JwtService jwtService) {
+	public static MvcConfiguration configureMvc(ObjectMapper objectMapper, Validator validator, ConvertionService conversionService, JwtService jwtService) {
 		log.info("Waking up");
-		
-		final var objectMapper = new ObjectMapper()
-			.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 		
 		return MvcConfiguration.builder()
 			.objectMapper(objectMapper)
