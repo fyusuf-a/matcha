@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
+import ft.app.matcha.configuration.AuthConfigurationProperties;
 import ft.app.matcha.domain.auth.event.EmailValidatedEvent;
 import ft.app.matcha.domain.auth.event.RegisterEvent;
 import ft.app.matcha.domain.user.User;
@@ -24,7 +25,7 @@ public class EmailTokenService {
 	private final EmailSender emailSender;
 	private final ApplicationEventPublisher eventPublisher;
 	
-	public EmailTokenService(EmailTokenRepository repository, AuthConfiguration configuration, EmailSender emailSender, ApplicationEventPublisher eventPublisher) {
+	public EmailTokenService(EmailTokenRepository repository, AuthConfigurationProperties configuration, EmailSender emailSender, ApplicationEventPublisher eventPublisher) {
 		this.repository = repository;
 		this.length = configuration.getRefreshTokenLength();
 		this.expiration = configuration.getRefreshTokenExpiration();

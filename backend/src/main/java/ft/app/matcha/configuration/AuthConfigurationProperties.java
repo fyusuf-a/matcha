@@ -1,4 +1,4 @@
-package ft.app.matcha.domain.auth;
+package ft.app.matcha.configuration;
 
 import java.time.Duration;
 
@@ -11,7 +11,7 @@ import lombok.Data;
 @Valid
 @Data
 @ConfigurationProperties(prefix = "auth")
-public class AuthConfiguration {
+public class AuthConfigurationProperties {
 	
 	private String jwtSecret = RandomStringUtils.randomAlphanumeric(128);
 	private Duration jwtExpiration = Duration.ofMinutes(15);

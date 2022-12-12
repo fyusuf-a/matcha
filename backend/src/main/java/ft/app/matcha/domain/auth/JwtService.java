@@ -4,6 +4,7 @@ import java.security.Key;
 import java.time.Duration;
 import java.util.Date;
 
+import ft.app.matcha.configuration.AuthConfigurationProperties;
 import ft.app.matcha.domain.auth.exception.JwtException;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserRepository;
@@ -20,7 +21,7 @@ public class JwtService {
 	private final Key key;
 	private final Duration expiration;
 	
-	public JwtService(UserRepository userRepository, AuthConfiguration configuration) {
+	public JwtService(UserRepository userRepository, AuthConfigurationProperties configuration) {
 		this.userRepository = userRepository;
 		this.key = Keys.hmacShaKeyFor(configuration.getJwtSecret().getBytes());
 		this.expiration = configuration.getJwtExpiration();
