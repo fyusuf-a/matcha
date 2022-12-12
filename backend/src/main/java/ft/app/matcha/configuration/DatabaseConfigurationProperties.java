@@ -16,7 +16,7 @@ public class DatabaseConfigurationProperties {
 	private String host = "localhost";
 	
 	@Port
-	private int port = 465;
+	private int port = 3306;
 	
 	private String user;
 	

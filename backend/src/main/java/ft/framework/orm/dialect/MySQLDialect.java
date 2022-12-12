@@ -1,6 +1,6 @@
 package ft.framework.orm.dialect;
 
-import java.sql.SQLIntegrityConstraintViolationException;
+import java.sql.SQLException;
 import java.sql.SQLType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import com.mysql.cj.MysqlType;
 
 import ft.framework.mvc.domain.Pageable;
+import ft.framework.orm.error.DuplicateRelationshipException;
 import ft.framework.orm.error.DuplicateValueException;
 import ft.framework.orm.mapping.Column;
 import ft.framework.orm.mapping.DataType;
@@ -31,6 +32,7 @@ import ft.framework.orm.predicate.Predicate;
 public class MySQLDialect implements Dialect {
 	
 	public static final Pattern DUPLICATE_VALUE_PATTERN = Pattern.compile("^Duplicate entry '(.*?)' for key '(.*?)'$");
+	public static final Pattern DUPLICATE_FOREIGN_KEY_PATTERN = Pattern.compile("^Duplicate foreign key constraint name '(.*?)'$");
 	
 	private static final Map<Class<?>, SQLType> simpleTypes = new HashMap<>();
 	private static final Map<Branch.Type, String> branchToCode = new EnumMap<>(Branch.Type.class);
@@ -72,7 +74,7 @@ public class MySQLDialect implements Dialect {
 	}
 	
 	@Override
-	public Exception translate(Table table, SQLIntegrityConstraintViolationException exception) {
+	public Exception translate(Table table, SQLException exception) {
 		final var message = exception.getMessage();
 		
 		var matcher = DUPLICATE_VALUE_PATTERN.matcher(message);
@@ -83,7 +85,24 @@ public class MySQLDialect implements Dialect {
 			return new DuplicateValueException(value, constraint, exception);
 		}
 		
+		matcher = DUPLICATE_FOREIGN_KEY_PATTERN.matcher(message);
+		if (matcher.find()) {
+			final var relationship = findRelationByName(table, matcher.group(1));
+			
+			return new DuplicateRelationshipException(relationship, exception);
+		}
+		
 		return exception;
+	}
+	
+	private Relationship findRelationByName(Table table, String name) {
+		for (final var manyToOne : table.getManyToOnes()) {
+			if (manyToOne.getForeignKeyName().equalsIgnoreCase(name)) {
+				return manyToOne;
+			}
+		}
+		
+		return null;
 	}
 	
 	private Constraint findConstraintByName(Table table, String name) {
@@ -147,28 +166,49 @@ public class MySQLDialect implements Dialect {
 	
 	@Override
 	public String buildCreateTableStatement(Table table) {
-		final var sql = new StringBuilder();
-		
-		sql.append("CREATE TABLE `").append(table.getName()).append("`(\n");
+		final var sql = new StringBuilder()
+			.append("CREATE TABLE ")
+			.append(quote(table)).append("(\n");
 		
 		for (final var column : table.getColumns()) {
-			sql.append("\t`").append(column.getName()).append("` ").append(translate(column.getDataType()));
+			boolean isId = table.getIdColumn().equals(column);
 			
-			if (!column.isNullable()) {
-				sql.append(" NOT NULL");
-			}
-			
-			if (table.getIdColumn().equals(column)) {
-				sql.append(" AUTO_INCREMENT");
-			}
-			
-			sql.append(",\n");
+			sql.append("\t`")
+				.append(buildColumn(column, isId))
+				.append(",\n");
 		}
 		
-		sql.append("\tPRIMARY KEY(`" + table.getIdColumn().getName() + "`)\n");
-		sql.append(");");
+		return sql
+			.append("\tPRIMARY KEY(").append(quote(table.getIdColumn())).append(")\n")
+			.append(");")
+			.toString();
+	}
+	
+	public String buildColumn(Column column, boolean isId) {
+		final var sql = new StringBuilder()
+			.append(quote(column))
+			.append(' ')
+			.append(translate(column.getDataType()));
+		
+		if (!column.isNullable()) {
+			sql.append(" NOT NULL");
+		}
+		
+		if (isId) {
+			sql.append(" AUTO_INCREMENT");
+		}
 		
 		return sql.toString();
+	}
+	
+	@Override
+	public String buildAlterTableAddColumnStatement(Table table, Column column) {
+		return new StringBuilder()
+			.append("ALTER TABLE ")
+			.append(quote(table))
+			.append(" ADD ")
+			.append(buildColumn(column, false))
+			.toString();
 	}
 	
 	@Override
@@ -361,6 +401,34 @@ public class MySQLDialect implements Dialect {
 		sql.append(";");
 		
 		return sql.toString();
+	}
+	
+	@Override
+	public String buildShowTableStatement() {
+		return "SHOW TABLES;";
+	}
+	
+	@Override
+	public String buildShowColumnStatement(Table table) {
+		return new StringBuilder()
+			.append("SHOW COLUMNS FROM ")
+			.append(quote(table))
+			.append(';')
+			.toString();
+	}
+	
+	@Override
+	public String buildShowConstraintStatement(Table table) {
+		return new StringBuilder()
+			.append("SHOW KEYS FROM ")
+			.append(quote(table))
+			.append(';')
+			.toString();
+	}
+	
+	@Override
+	public int getConstraintNameColumnIndex() {
+		return 3;
 	}
 	
 	public StringBuilder buildSelectFrom(Table table, Collection<Column> columns) {

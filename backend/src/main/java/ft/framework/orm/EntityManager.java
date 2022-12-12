@@ -22,6 +22,8 @@ import com.mysql.cj.MysqlType;
 
 import ft.framework.mvc.domain.Page;
 import ft.framework.mvc.domain.Pageable;
+import ft.framework.orm.ddl.DDLStrategy;
+import ft.framework.orm.ddl.UpdateDDLStrategy;
 import ft.framework.orm.dialect.Dialect;
 import ft.framework.orm.mapping.Column;
 import ft.framework.orm.mapping.Entity;
@@ -453,6 +455,18 @@ public class EntityManager {
 				applyPredicate(statement, child, index);
 			}
 		}
+	}
+	
+	@SneakyThrows
+	public void applyDataDefinitionLanguage() {
+		try (final var connection = dataSource.getPooledConnection().getConnection()) {
+			applyDataDefinitionLanguage(new UpdateDDLStrategy(connection, dialect));
+		}
+	}
+	
+	@SneakyThrows
+	public void applyDataDefinitionLanguage(DDLStrategy strategy) {
+		strategy.apply(getEntities());
 	}
 	
 	@Builder

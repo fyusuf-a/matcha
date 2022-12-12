@@ -174,6 +174,7 @@ public class Matcha {
 	public static OrmConfiguration configureOrm(DatabaseConfigurationProperties databaseConfiguration, Class<?>... entityClasses) {
 		final var dataSource = new MysqlConnectionPoolDataSource();
 		dataSource.setServerName(databaseConfiguration.getHost());
+		dataSource.setPort(databaseConfiguration.getPort());
 		dataSource.setUser(databaseConfiguration.getUser());
 		dataSource.setPassword(databaseConfiguration.getPassword());
 		dataSource.setDatabaseName(databaseConfiguration.getDatabase());
@@ -186,31 +187,12 @@ public class Matcha {
 		Arrays.stream(entityClasses)
 			.forEach(mappingBuilder::analyze);
 		
-		final var configuration = OrmConfiguration.builder()
-			.entityManager(new EntityManager(dataSource, dialect, mappingBuilder))
+		final var entityManager = new EntityManager(dataSource, dialect, mappingBuilder);
+		entityManager.applyDataDefinitionLanguage();
+		
+		return OrmConfiguration.builder()
+			.entityManager(entityManager)
 			.build();
-		
-		for (final var entity : mappingBuilder.getEntities()) {
-			System.out.println(dialect.buildCreateTableStatement(entity.getTable()));
-		}
-		
-		for (final var entity : mappingBuilder.getEntities()) {
-			final var table = entity.getTable();
-			
-			for (final var manyToOne : table.getManyToOnes()) {
-				System.out.println(dialect.buildAlterTableAddForeignKeyStatement(table, manyToOne));
-			}
-			
-			for (final var index : table.getIndexes()) {
-				System.out.println(dialect.buildCreateIndexStatement(table, index));
-			}
-			
-			for (final var unique : table.getUniques()) {
-				System.out.println(dialect.buildAlterTableAddUniqueStatement(table, unique));
-			}
-		}
-		
-		return configuration;
 	}
 	
 	@SneakyThrows
