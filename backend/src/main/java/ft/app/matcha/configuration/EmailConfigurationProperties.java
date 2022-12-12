@@ -1,4 +1,4 @@
-package ft.app.matcha.domain.auth;
+package ft.app.matcha.configuration;
 
 import ft.framework.property.annotation.ConfigurationProperties;
 import ft.framework.validation.annotation.Valid;
@@ -11,7 +11,7 @@ import lombok.ToString;
 @Valid
 @Data
 @ConfigurationProperties(prefix = "mail")
-public class EmailConfiguration {
+public class EmailConfigurationProperties {
 	
 	private String defaultSubject = "A message from matcha";
 	

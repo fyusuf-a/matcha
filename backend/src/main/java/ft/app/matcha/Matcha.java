@@ -7,10 +7,11 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 
-import ft.app.matcha.domain.auth.AuthConfiguration;
+import ft.app.matcha.configuration.AuthConfigurationProperties;
+import ft.app.matcha.configuration.DatabaseConfigurationProperties;
+import ft.app.matcha.configuration.EmailConfigurationProperties;
 import ft.app.matcha.domain.auth.AuthController;
 import ft.app.matcha.domain.auth.AuthService;
-import ft.app.matcha.domain.auth.EmailConfiguration;
 import ft.app.matcha.domain.auth.EmailSender;
 import ft.app.matcha.domain.auth.EmailToken;
 import ft.app.matcha.domain.auth.EmailTokenRepository;
@@ -90,10 +91,17 @@ public class Matcha {
 				.resolver(new EnvironmentPropertyResolver())
 				.build();
 			
-			final var authConfiguration = propertyBinder.bind(new AuthConfiguration());
-			final var emailConfiguration = propertyBinder.bind(new EmailConfiguration());
+			final var databaseConfiguration = propertyBinder.bind(new DatabaseConfigurationProperties());
+			final var authConfiguration = propertyBinder.bind(new AuthConfigurationProperties());
+			final var emailConfiguration = propertyBinder.bind(new EmailConfigurationProperties());
 			
-			final var ormConfiguration = configureOrm(User.class, RefreshToken.class, Notification.class, Like.class, EmailToken.class);
+			final var ormConfiguration = configureOrm(databaseConfiguration, new Class<?>[] {
+				User.class,
+				RefreshToken.class,
+				Notification.class,
+				Like.class,
+				EmailToken.class,
+			});
 			
 			final var eventPublisher = new ApplicationEventPublisher();
 			final var taskScheduler = new WispTaskScheduler();
@@ -163,14 +171,14 @@ public class Matcha {
 	}
 	
 	@SneakyThrows
-	public static OrmConfiguration configureOrm(Class<?>... entityClasses) {
+	public static OrmConfiguration configureOrm(DatabaseConfigurationProperties databaseConfiguration, Class<?>... entityClasses) {
 		final var dataSource = new MysqlConnectionPoolDataSource();
-		dataSource.setServerName("localhost");
-		dataSource.setUser("root");
-		dataSource.setPassword("password");
-		dataSource.setDatabaseName("matcha");
-		dataSource.setAutoReconnect(true);
-		dataSource.setAutoReconnectForPools(true);
+		dataSource.setServerName(databaseConfiguration.getHost());
+		dataSource.setUser(databaseConfiguration.getUser());
+		dataSource.setPassword(databaseConfiguration.getPassword());
+		dataSource.setDatabaseName(databaseConfiguration.getDatabase());
+		dataSource.setAutoReconnect(databaseConfiguration.isAutoReconnect());
+		dataSource.setAutoReconnectForPools(databaseConfiguration.isAutoReconnect());
 		
 		final var dialect = new MySQLDialect();
 		

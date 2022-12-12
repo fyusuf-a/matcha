@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
+import ft.app.matcha.configuration.AuthConfigurationProperties;
 import ft.app.matcha.domain.user.User;
 import ft.framework.schedule.annotation.Scheduled;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class RefreshTokenService {
 	private final int length;
 	private final Duration expiration;
 	
-	public RefreshTokenService(RefreshTokenRepository repository, AuthConfiguration configuration) {
+	public RefreshTokenService(RefreshTokenRepository repository, AuthConfigurationProperties configuration) {
 		this.repository = repository;
 		this.length = configuration.getRefreshTokenLength();
 		this.expiration = configuration.getRefreshTokenExpiration();

@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
+import ft.app.matcha.configuration.EmailConfigurationProperties;
 import ft.framework.util.MediaTypes;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -33,12 +34,12 @@ public class EmailSender {
 	
 	public static final Pattern TITLE_PATTERN = Pattern.compile("<title>(.+?)</title>");
 	
-	private final EmailConfiguration configuration;
+	private final EmailConfigurationProperties configuration;
 	private final InternetAddress from;
 	private final Configuration freemarkerConfiguration;
 	
 	@SneakyThrows
-	public EmailSender(EmailConfiguration configuration) {
+	public EmailSender(EmailConfigurationProperties configuration) {
 		this.configuration = configuration;
 		this.from = new InternetAddress(configuration.getSender());
 		
