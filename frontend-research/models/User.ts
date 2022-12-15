@@ -1,4 +1,5 @@
 export interface User {
     id: number,
-    login: string
+    login: string,
+    emailConfirmed: boolean
 }
