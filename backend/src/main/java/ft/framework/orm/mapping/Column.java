@@ -23,16 +23,33 @@ public class Column implements Named {
 	
 	@SneakyThrows
 	public Object read(Object instance) {
-		return FieldUtils.readField(field, instance, true);
+		var value = FieldUtils.readField(field, instance, true);
+		
+		if (value != null && isEnum()) {
+			value = ((Enum<?>) value).name();
+		}
+		
+		return value;
 	}
-
+	
+	@SuppressWarnings("unchecked")
 	@SneakyThrows
 	public void write(Object instance, Object value) {
+		if (value != null && isEnum()) {
+			value = Enum.<Fake>valueOf((Class<Fake>) dataType.getType(), (String) value);
+		}
+		
 		FieldUtils.writeField(field, instance, value, true);
 	}
-
+	
 	public boolean isMatching(String name) {
 		return this.name.equalsIgnoreCase(name) || field.getName().equalsIgnoreCase(name);
 	}
+	
+	public boolean isEnum() {
+		return dataType.getType().isEnum();
+	}
+	
+	private enum Fake {};
 	
 }

@@ -2,6 +2,7 @@ package ft.framework.orm.ddl;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLSyntaxErrorException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -171,6 +172,9 @@ public class UpdateDDLStrategy implements DDLStrategy {
 	public boolean execute(String sql) throws SQLException {
 		try (final var statement = connection.createStatement()) {
 			return statement.execute(sql);
+		} catch (SQLSyntaxErrorException exception) {
+			log.error("SQL: {}", sql);
+			throw exception;
 		}
 	}
 	

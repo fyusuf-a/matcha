@@ -49,7 +49,13 @@ public class User {
 	private String lastName;
 	
 	@Column
-	private String bio;
+	private String biography;
+	
+	@Column
+	private Gender gender;
+	
+	@Column
+	private SexualOrientation sexualOrientation;
 	
 	@Column(nullable = false)
 	private boolean emailConfirmed;

@@ -16,8 +16,6 @@ import java.util.stream.Collectors;
 
 import javax.sql.ConnectionPoolDataSource;
 
-import org.apache.commons.lang3.reflect.FieldUtils;
-
 import com.mysql.cj.MysqlType;
 
 import ft.framework.mvc.domain.Page;
@@ -92,7 +90,7 @@ public class EntityManager {
 				
 				var index = 1;
 				for (final var column : columns) {
-					var value = FieldUtils.readField(column.getField(), original, true);
+					var value = column.read(original);
 					if (column instanceof ManyToOne manyToOne) {
 						final Entity<?> target = manyToOne.getTarget();
 						value = target.getTable().getIdColumn().read(value);
@@ -143,7 +141,7 @@ public class EntityManager {
 				
 				var index = 1;
 				for (final var column : columns) {
-					var value = FieldUtils.readField(column.getField(), original, true);
+					var value = column.read(original);
 					if (column instanceof ManyToOne manyToOne) {
 						final Entity<?> target = manyToOne.getTarget();
 						value = target.getTable().getIdColumn().read(value);
@@ -166,9 +164,9 @@ public class EntityManager {
 				
 				try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
 					if (generatedKeys.next()) {
-						final var idField = table.getIdColumn().getField();
-						final var id = generatedKeys.getObject(1, idField.getType());
-						FieldUtils.writeField(idField, instance, id, true);
+						final var idColumn = table.getIdColumn();
+						final var id = generatedKeys.getObject(1, idColumn.getField().getType());
+						idColumn.write(instance, id);
 					} else {
 						throw new SQLException("Creating failed, no ID obtained.");
 					}

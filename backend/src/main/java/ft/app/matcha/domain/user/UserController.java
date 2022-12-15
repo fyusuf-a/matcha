@@ -32,7 +32,12 @@ public class UserController {
 	) {
 		return repository.save(new User()
 			.setLogin(body.getName())
-			.setBio(body.getBio()));
+			.setPassword("")
+			.setEmail("")
+			.setFirstName("")
+			.setLastName("")
+			.setGender(Gender.MAN)
+			.setBiography(body.getBio()));
 	}
 	
 	@GetMapping(path = "{id}")

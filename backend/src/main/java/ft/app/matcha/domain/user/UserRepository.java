@@ -16,7 +16,7 @@ public class UserRepository extends Repository<User, Long> {
 		return findAllBy(
 			builder.and(
 				builder.equals(User.Fields.login, name),
-				builder.isNotNull(User.Fields.bio)
+				builder.isNotNull(User.Fields.biography)
 			)
 		);
 	}

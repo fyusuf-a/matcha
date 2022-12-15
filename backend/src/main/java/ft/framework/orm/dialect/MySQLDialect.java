@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.sql.SQLType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -153,10 +154,20 @@ public class MySQLDialect implements Dialect {
 			}
 			
 			if (MysqlType.VARCHAR.equals(sqlType)) {
-				return String.format("%s(%s)", sqlType.getName(), length);
+				return "%s(%s)".formatted(sqlType.getName(), length);
 			} else {
 				return sqlType.getName();
 			}
+		}
+		
+		if (type.isEnum()) {
+			final var constants = Arrays.stream(type.getEnumConstants())
+				.map(Enum.class::cast)
+				.map(Enum::name)
+				.map((name) -> "'%s'".formatted(name))
+				.collect(Collectors.joining(", "));
+			
+			return "%s(%s)".formatted(MysqlType.ENUM.getName(), constants);
 		}
 		
 		// TODO Decimal
