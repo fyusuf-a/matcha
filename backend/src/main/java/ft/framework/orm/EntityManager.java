@@ -442,10 +442,7 @@ public class EntityManager {
 	@SneakyThrows
 	public void applyPredicate(PreparedStatement statement, Predicate<?> predicate, int[] index) {
 		if (predicate instanceof Comparison<?> comparison) {
-			var value = comparison.getValue();
-			if (value instanceof ProxiedEntity proxied) {
-				value = proxied.getEntityHandler().getId();
-			}
+			var value = convertValue(comparison.getValue());
 			
 			statement.setObject(index[0]++, value, MysqlType.VARCHAR /* TODO */);
 		} else if (predicate instanceof Branch<?> branch) {
@@ -453,6 +450,18 @@ public class EntityManager {
 				applyPredicate(statement, child, index);
 			}
 		}
+	}
+	
+	// TODO This should be moved
+	public Object convertValue(Object value) {
+		if (value instanceof ProxiedEntity proxied) {
+			return proxied.getEntityHandler().getId();
+		}
+		if (value instanceof Enum<?> enum_) {
+			return enum_.name();
+		}
+		
+		return value;
 	}
 	
 	@SneakyThrows

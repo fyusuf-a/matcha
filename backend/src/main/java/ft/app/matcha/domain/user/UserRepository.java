@@ -29,5 +29,9 @@ public class UserRepository extends Repository<User, Long> {
 			)
 		);
 	}
+
+	public List<User> findAllMen() {
+		return findAllBy(builder.equals(User.Fields.gender, Gender.MAN));
+	}
 	
 }

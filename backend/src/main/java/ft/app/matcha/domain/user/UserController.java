@@ -40,6 +40,11 @@ public class UserController {
 			.setBiography(body.getBio()));
 	}
 	
+	@GetMapping(path = "/men")
+	public List<User> showMen() {
+		return repository.findAllMen();
+	}
+	
 	@GetMapping(path = "{id}")
 	public User show(
 		@Variable long id

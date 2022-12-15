@@ -24,7 +24,8 @@ public class Column implements Named {
 	@SneakyThrows
 	public Object read(Object instance) {
 		var value = FieldUtils.readField(field, instance, true);
-		
+
+		// TODO This should be moved
 		if (value != null && isEnum()) {
 			value = ((Enum<?>) value).name();
 		}
@@ -35,6 +36,7 @@ public class Column implements Named {
 	@SuppressWarnings("unchecked")
 	@SneakyThrows
 	public void write(Object instance, Object value) {
+		// TODO This should be moved
 		if (value != null && isEnum()) {
 			value = Enum.<Fake>valueOf((Class<Fake>) dataType.getType(), (String) value);
 		}
