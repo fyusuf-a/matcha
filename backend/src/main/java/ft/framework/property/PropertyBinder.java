@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -13,9 +14,10 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import ft.framework.convert.service.ConvertionService;
 import ft.framework.property.annotation.ConfigurationProperties;
 import ft.framework.property.resolver.PropertyResolver;
+import ft.framework.validation.ValidationException;
 import ft.framework.validation.Validator;
-import ft.framework.validation.ViolationException;
 import ft.framework.validation.annotation.Valid;
+import ft.framework.validation.constraint.ConstraintViolation;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Singular;
@@ -39,6 +41,7 @@ public class PropertyBinder {
 		return bind(instance, prefix);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public <T> T bind(T instance, List<String> prefix) {
 		final var clazz = instance.getClass();
 		final var fields = FieldUtils.getAllFields(clazz);
@@ -57,7 +60,7 @@ public class PropertyBinder {
 			final var violations = validator.validate(instance);
 			
 			if (!violations.isEmpty()) {
-				throw new ViolationException(violations);
+				throw new ValidationException((Set<ConstraintViolation<?>>) (Object) violations);
 			}
 		}
 		

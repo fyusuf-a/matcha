@@ -58,8 +58,8 @@ import ft.framework.schedule.impl.WispTaskScheduler;
 import ft.framework.swagger.SwaggerBuilder;
 import ft.framework.swagger.controller.SwaggerController;
 import ft.framework.trace.filter.LoggingFilter;
+import ft.framework.validation.ValidationException;
 import ft.framework.validation.Validator;
-import ft.framework.validation.ViolationException;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -155,7 +155,7 @@ public class Matcha {
 			routeRegistry.add(new SwaggerController(swagger));
 			
 			routeRegistry.markReady();
-		} catch (ViolationException exception) {
+		} catch (ValidationException exception) {
 			log.error("A model could not be validated", exception);
 			
 			final var violations = exception.getViolations();
