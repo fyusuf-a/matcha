@@ -61,6 +61,7 @@ public class SchemaBuilder {
 	}
 	
 	public static Optional<Schema<?>> build(JavaType type, OpenAPI swagger) {
+		System.out.println(type);
 		if (type.isContainerType()) {
 			if (type instanceof CollectionLikeType collectionLikeType) {
 				final var schema = new ArraySchema();
@@ -80,6 +81,10 @@ public class SchemaBuilder {
 		} else if (type instanceof SimpleType simpleType) {
 			final var clazz = ClassUtils.primitiveToWrapper(simpleType.getRawClass());
 			
+			if (void.class.equals(clazz)) {
+				return Optional.empty();
+			}
+ 			
 			final var simpleBuilder = SCHEMA_BUILDERS.get(clazz);
 			if (simpleBuilder != null) {
 				return Optional.of(simpleBuilder.get());
