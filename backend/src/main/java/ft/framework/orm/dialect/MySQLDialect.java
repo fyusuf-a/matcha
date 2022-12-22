@@ -184,7 +184,7 @@ public class MySQLDialect implements Dialect {
 		for (final var column : table.getColumns()) {
 			boolean isId = table.getIdColumn().equals(column);
 			
-			sql.append("\t`")
+			sql.append("\t")
 				.append(buildColumn(column, isId))
 				.append(",\n");
 		}
