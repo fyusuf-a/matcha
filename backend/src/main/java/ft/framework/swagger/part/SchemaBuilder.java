@@ -12,6 +12,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+import javax.servlet.http.Part;
+
 import org.apache.commons.lang3.ClassUtils;
 
 import com.fasterxml.jackson.databind.JavaType;
@@ -49,6 +51,7 @@ public class SchemaBuilder {
 		builders.put(LocalDateTime.class, DateTimeSchema::new);
 		builders.put(InputStream.class, BinarySchema::new);
 		builders.put(LocalTime.class, () -> new StringSchema().format("time"));
+		builders.put(Part.class, () -> new BinarySchema());
 		
 		SCHEMA_BUILDERS = Collections.unmodifiableMap(builders);
 	}

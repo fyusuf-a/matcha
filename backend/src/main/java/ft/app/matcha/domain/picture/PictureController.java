@@ -16,6 +16,7 @@ import ft.framework.util.MediaTypes;
 @RequestMapping(path = "/pictures")
 public class PictureController {
 	
+//	@Authenticated
 	@PostMapping(produce = MediaTypes.PNG, consume = MediaTypes.FORM_DATA)
 	public InputStream index(
 		@FormData Part file
