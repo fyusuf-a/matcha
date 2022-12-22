@@ -10,6 +10,7 @@ import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import ft.app.matcha.configuration.AuthConfigurationProperties;
 import ft.app.matcha.configuration.DatabaseConfigurationProperties;
 import ft.app.matcha.configuration.EmailConfigurationProperties;
+import ft.app.matcha.configuration.MatchaConfigurationProperties;
 import ft.app.matcha.domain.auth.AuthController;
 import ft.app.matcha.domain.auth.AuthService;
 import ft.app.matcha.domain.auth.EmailSender;
@@ -24,7 +25,10 @@ import ft.app.matcha.domain.like.Like;
 import ft.app.matcha.domain.notification.Notification;
 import ft.app.matcha.domain.notification.NotificationRepository;
 import ft.app.matcha.domain.notification.NotificationService;
+import ft.app.matcha.domain.picture.Picture;
 import ft.app.matcha.domain.picture.PictureController;
+import ft.app.matcha.domain.picture.PictureRepository;
+import ft.app.matcha.domain.picture.PictureService;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserController;
 import ft.app.matcha.domain.user.UserRepository;
@@ -95,6 +99,7 @@ public class Matcha {
 			final var databaseConfiguration = propertyBinder.bind(new DatabaseConfigurationProperties());
 			final var authConfiguration = propertyBinder.bind(new AuthConfigurationProperties());
 			final var emailConfiguration = propertyBinder.bind(new EmailConfigurationProperties());
+			final var matchaConfiguration = propertyBinder.bind(new MatchaConfigurationProperties());
 			
 			final var ormConfiguration = configureOrm(databaseConfiguration, new Class<?>[] {
 				User.class,
@@ -102,6 +107,7 @@ public class Matcha {
 				Notification.class,
 				Like.class,
 				EmailToken.class,
+				Picture.class,
 			});
 			
 			final var eventPublisher = new ApplicationEventPublisher();
@@ -111,6 +117,7 @@ public class Matcha {
 			final var refreshTokenRepository = new RefreshTokenRepository(ormConfiguration.getEntityManager());
 			final var notificationRepository = new NotificationRepository(ormConfiguration.getEntityManager());
 			final var emailTokenRepository = new EmailTokenRepository(ormConfiguration.getEntityManager());
+			final var pictureRepository = new PictureRepository(ormConfiguration.getEntityManager());
 			
 			final var emailSender = new EmailSender(emailConfiguration);
 			
@@ -120,6 +127,7 @@ public class Matcha {
 			final var emailTokenService = new EmailTokenService(emailTokenRepository, authConfiguration, emailSender, eventPublisher);
 			final var authService = new AuthService(userService, refreshTokenService, emailTokenService, jwtService, eventPublisher);
 			final var notificationService = new NotificationService(notificationRepository);
+			final var pictureService = new PictureService(pictureRepository, matchaConfiguration);
 			
 			final var services = Arrays.asList(new Object[] {
 				userService,
@@ -128,6 +136,7 @@ public class Matcha {
 				authService,
 				notificationService,
 				emailTokenService,
+				pictureService,
 			});
 			
 			final var eventListenerFactory = new EventListenerFactory(eventPublisher);
@@ -140,7 +149,7 @@ public class Matcha {
 			final var routeRegistry = new RouteRegistry(mvcConfiguration);
 			
 			routeRegistry.add(new AuthController(authService));
-			routeRegistry.add(new PictureController());
+			routeRegistry.add(new PictureController(userService, pictureService));
 			routeRegistry.add(new UserController(userRepository));
 			
 			final var swagger = new OpenAPI()

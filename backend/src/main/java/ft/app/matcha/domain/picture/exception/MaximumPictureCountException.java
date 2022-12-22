@@ -1,4 +1,4 @@
-package ft.app.matcha.domain.user;
+package ft.app.matcha.domain.picture.exception;
 
 import org.eclipse.jetty.http.HttpStatus;
 
@@ -8,16 +8,16 @@ import lombok.Getter;
 
 @ResponseStatus(HttpStatus.CONFLICT_409)
 @SuppressWarnings("serial")
-@Getter
-public class LoginAlreadyTakenException extends RuntimeException {
+public class MaximumPictureCountException extends RuntimeException {
 	
+	@Getter
 	@ResponseErrorProperty
-	private final String login;
+	private final long max;
 	
-	public LoginAlreadyTakenException(String login) {
-		super("login already taken");
+	public MaximumPictureCountException(long max) {
+		super("maximum picture count reached");
 		
-		this.login = login;
+		this.max = max;
 	}
 	
 }

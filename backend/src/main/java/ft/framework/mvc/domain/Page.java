@@ -1,5 +1,6 @@
 package ft.framework.mvc.domain;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -44,6 +45,10 @@ public class Page<T> {
 	
 	public boolean isLast() {
 		return pageable.getPage() >= getTotalPages();
+	}
+
+	public static <T> Page<T> empty(Pageable pageable) {
+		return new Page<>(Collections.emptyList(), 0, pageable);
 	}
 	
 }

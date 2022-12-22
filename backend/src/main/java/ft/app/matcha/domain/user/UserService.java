@@ -2,6 +2,7 @@ package ft.app.matcha.domain.user;
 
 import java.util.Optional;
 
+import ft.app.matcha.domain.user.exception.LoginAlreadyTakenException;
 import ft.framework.orm.error.DuplicateValueException;
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +23,10 @@ public class UserService {
 		} catch (DuplicateValueException exception) {
 			throw new LoginAlreadyTakenException(login);
 		}
+	}
+
+	public Optional<User> find(Long id) {
+		return repository.findById(id);
 	}
 	
 	public Optional<User> find(String login, String password) {

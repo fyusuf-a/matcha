@@ -1,4 +1,4 @@
-package ft.app.matcha.domain.user;
+package ft.app.matcha.domain.user.model;
 
 public enum SexualOrientation {
 	
