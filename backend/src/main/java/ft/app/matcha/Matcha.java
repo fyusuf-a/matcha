@@ -41,6 +41,7 @@ import ft.framework.mvc.http.convert.impl.JacksonHttpMessageConverter;
 import ft.framework.mvc.mapping.RouteRegistry;
 import ft.framework.mvc.resolver.argument.impl.AuthenticationHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.BodyHandlerMethodArgumentResolver;
+import ft.framework.mvc.resolver.argument.impl.FormDataHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.PageableHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.PrincipalHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.QueryHandlerMethodArgumentResolver;
@@ -216,6 +217,7 @@ public class Matcha {
 				new PageableHandlerMethodArgumentResolver(),
 				new AuthenticationHandlerMethodArgumentResolver(),
 				new PrincipalHandlerMethodArgumentResolver(),
+				new FormDataHandlerMethodArgumentResolver(),
 				new BodyHandlerMethodArgumentResolver(objectMapper)))
 			.filter(new JwtAuthenticationFilter(jwtService))
 			.filter(new LoggingFilter())
