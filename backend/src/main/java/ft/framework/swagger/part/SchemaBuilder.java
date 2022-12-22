@@ -5,6 +5,7 @@ import java.lang.reflect.Type;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -79,12 +80,12 @@ public class SchemaBuilder {
 				return Optional.of(schema);
 			}
 		} else if (type instanceof SimpleType simpleType) {
-			final var clazz = ClassUtils.primitiveToWrapper(simpleType.getRawClass());
+			final Class<?> clazz = ClassUtils.primitiveToWrapper(simpleType.getRawClass());
 			
 			if (void.class.equals(clazz)) {
 				return Optional.empty();
 			}
- 			
+			
 			final var simpleBuilder = SCHEMA_BUILDERS.get(clazz);
 			if (simpleBuilder != null) {
 				return Optional.of(simpleBuilder.get());
@@ -100,19 +101,33 @@ public class SchemaBuilder {
 		
 		final var found = schemas.get(name);
 		if (found == null) {
-			final var schema = new ObjectSchema();
-			schema.setName(name);
+			final var clazz = type.getRawClass();
 			
-			schemas.put(name, schema);
-			
-			final var beanDescription = new ObjectMapper().getSerializationConfig().introspect(type);
-			final var properties = beanDescription.findProperties();
-			
-			for (final var property : properties) {
-				final var primaryType = property.getPrimaryType();
+			if (clazz.isEnum()) {
+				final var schema = new StringSchema();
+				schema.setName(name);
 				
-				build(primaryType, swagger)
-					.ifPresent((itemSchema) -> schema.addProperty(property.getName(), itemSchema));
+				schemas.put(name, schema);
+				
+				Arrays.stream(clazz.getEnumConstants())
+					.map(Enum.class::cast)
+					.map(Enum::name)
+					.forEach(schema::addEnumItem);
+			} else {
+				final var schema = new ObjectSchema();
+				schema.setName(name);
+				
+				schemas.put(name, schema);
+				
+				final var beanDescription = new ObjectMapper().getSerializationConfig().introspect(type);
+				final var properties = beanDescription.findProperties();
+				
+				for (final var property : properties) {
+					final var primaryType = property.getPrimaryType();
+					
+					build(primaryType, swagger)
+						.ifPresent((itemSchema) -> schema.addProperty(property.getName(), itemSchema));
+				}
 			}
 		}
 		
