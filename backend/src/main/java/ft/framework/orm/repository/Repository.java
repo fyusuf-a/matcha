@@ -72,4 +72,8 @@ public class Repository<T, ID> {
 		return entityManager.deleteAllBy(entity, predicate);
 	}
 	
+	protected long countBy(Predicate<T> predicate) {
+		return entityManager.countBy(entity, predicate);
+	}
+	
 }

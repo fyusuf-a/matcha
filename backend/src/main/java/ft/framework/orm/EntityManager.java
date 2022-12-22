@@ -215,6 +215,29 @@ public class EntityManager {
 	}
 	
 	@SneakyThrows
+	public <T> long countBy(Entity<T> entity, Predicate<T> predicate) {
+		final var table = entity.getTable();
+		
+		try (final var connection = dataSource.getPooledConnection().getConnection()) {
+			final var sql = dialect.buildCountStatement(table, predicate);
+			
+			log.trace("countBy: {}", sql);
+			
+			try (final var statement = connection.prepareStatement(sql.toString())) {
+				applyPredicate(statement, predicate);
+				
+				try (ResultSet resultSet = statement.executeQuery()) {
+					if (resultSet.next()) {
+						return resultSet.getLong(1);
+					}
+				}
+			}
+		}
+		
+		return 0;
+	}
+	
+	@SneakyThrows
 	public <T> Optional<T> findById(Entity<T> entity, Object id) {
 		final var table = entity.getTable();
 		final var columns = table.getColumns();
