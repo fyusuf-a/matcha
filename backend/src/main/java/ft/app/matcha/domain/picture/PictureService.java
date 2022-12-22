@@ -1,10 +1,13 @@
 package ft.app.matcha.domain.picture;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
-
-import com.google.common.io.Files;
 
 import ft.app.matcha.configuration.MatchaConfigurationProperties;
 import ft.app.matcha.domain.picture.exception.MaximumPictureCountException;
@@ -24,9 +27,13 @@ public class PictureService {
 		this.maxPictureCount = matchaConfigurationProperties.getMaximumPictureCount();
 		this.storage = matchaConfigurationProperties.getPictureStorage();
 	}
-
+	
 	public Page<Picture> findAll(User user, Pageable pageable) {
 		return repository.findAllByUser(user, pageable);
+	}
+	
+	public Optional<Picture> findById(long id) {
+		return repository.findById(id);
 	}
 	
 	public Picture upload(User user, byte[] bytes) {
@@ -48,7 +55,7 @@ public class PictureService {
 	public String store(byte[] bytes) {
 		final var path = Paths.get(storage, UUID.randomUUID().toString());
 		
-		Files.write(bytes, path.toFile());
+		Files.write(path, bytes);
 		
 		return path.toString();
 	}
@@ -57,6 +64,22 @@ public class PictureService {
 		final var count = repository.countByUser(user);
 		
 		return count >= maxPictureCount;
+	}
+	
+	@SneakyThrows
+	public void delete(Picture picture) {
+		Files.deleteIfExists(toPath(picture));
+		
+		repository.delete(picture);
+	}
+
+	@SneakyThrows
+	public InputStream read(Picture picture) {
+		return new FileInputStream(toPath(picture).toFile());
+	}
+	
+	public Path toPath(Picture picture) {
+		return Paths.get(picture.getPath());
 	}
 	
 }
