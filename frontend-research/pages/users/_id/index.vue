@@ -3,19 +3,18 @@
     <v-row>
       <v-col cols="12">
         <v-card>
-          <v-card-title> {{ user.login }} </v-card-title>
+          <v-card-title>
+            {{ user.login }}
+            <v-spacer />
+            <v-btn color="primary" small :to="`/users/@me/edit`">
+              edit
+            </v-btn>
+          </v-card-title>
           <v-card-text>
             <pre><code class="d-block">{{ user }}</code></pre>
           </v-card-text>
           <v-card-text>
-            <v-chip
-              v-for="tag in tags"
-              :key="tag.id"
-              :color="tag.color"
-              :to="`/tags/${tag.id}/users`"
-            >
-              #{{ tag.name }}
-            </v-chip>
+            <tag-item v-for="tag in tags" :key="tag.id" :tag="tag" />
           </v-card-text>
           <v-card-actions>
             <like-button :peer="user" />
