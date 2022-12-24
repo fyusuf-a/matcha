@@ -6,7 +6,7 @@
       </v-btn>
     </template>
     <v-list>
-      <v-list-item :to="`/users/${user.id}`">
+      <v-list-item :to="`/users/@me`">
         <v-list-item-action>
           <v-icon>mdi-account</v-icon>
         </v-list-item-action>
