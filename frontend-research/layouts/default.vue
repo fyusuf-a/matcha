@@ -14,7 +14,6 @@
           :key="i"
           :to="item.to"
           router
-          exact
         >
           <v-list-item-action>
             <v-icon>{{ item.icon }}</v-icon>
@@ -85,6 +84,11 @@ export default defineComponent({
           icon: 'mdi-folder-image',
           title: 'Pictures',
           to: '/pictures',
+        },
+        {
+          icon: 'mdi-account',
+          title: 'Users',
+          to: '/users',
         },
       ],
     }

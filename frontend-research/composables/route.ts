@@ -25,3 +25,17 @@ export function useQueryValue<T>(name: string, defaultValue?: T, parse?: (input:
         }
     })
 }
+
+export function usePathValue<T>(name: string, parse?: (input: string) => T) {
+    const route = useRoute()
+
+    return computed<T>(() => {
+        const value = route.value.params[name] as string
+
+        if (parse) {
+            return parse(value)
+        }
+
+        return value as T
+    })
+}
