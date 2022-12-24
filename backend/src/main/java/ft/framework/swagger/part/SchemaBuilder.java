@@ -62,7 +62,6 @@ public class SchemaBuilder {
 	}
 	
 	public static Optional<Schema<?>> build(JavaType type, OpenAPI swagger) {
-		System.out.println(type);
 		if (type.isContainerType()) {
 			if (type instanceof CollectionLikeType collectionLikeType) {
 				final var schema = new ArraySchema();
