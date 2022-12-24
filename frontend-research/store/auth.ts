@@ -26,8 +26,11 @@ export const useAuthStore = defineStore('auth', {
             await this.fetchUser()
         },
         async logout() {
+            localStorage.removeItem(ACCESS_TOKEN_KEY)
+            localStorage.removeItem(REFRESH_TOKEN_KEY)
+            
             await axios.post(`/api/auth/logout`, this.tokens)
-
+            
             this.tokens = null
             this.user = null
         },

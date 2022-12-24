@@ -47,12 +47,14 @@
 
 <script lang="ts">
 import {
+  computed,
   defineComponent,
   onMounted,
   reactive,
   ref,
   unref,
   useContext,
+  useRoute,
   useRouter,
   watch,
 } from '@nuxtjs/composition-api'
@@ -64,8 +66,11 @@ export default defineComponent({
   setup() {
     const { $axios, $dialog } = useContext()
 
+    const route = useRoute()
     const router = useRouter()
     const authStore = useAuthStore()
+
+    const from = computed(() => route.value.query.from as string)
 
     const inputs = reactive({
       login: '',
@@ -90,7 +95,12 @@ export default defineComponent({
 
         await authStore.fetchUser()
 
-        router.push('/auth/verify')
+        router.push({
+          path: '/auth/verify',
+          query: {
+            from: from.value
+          }
+        })
       } catch (error) {
         const message = extractMessage(error)
         $dialog.notify.error(message)

@@ -26,17 +26,22 @@
 
 <script lang="ts">
 import {
+  computed,
   defineComponent,
   onMounted,
   reactive,
+  useRoute,
   useRouter,
   watch,
 } from '@nuxtjs/composition-api'
 import { useAuthStore } from '~/store'
 export default defineComponent({
   setup() {
+    const route = useRoute()
     const router = useRouter()
     const authStore = useAuthStore()
+
+    const from = computed(() => route.value.query.from as string)
 
     const inputs = reactive({
       login: '',
@@ -47,11 +52,15 @@ export default defineComponent({
       await authStore.login(inputs.login, inputs.password)
     }
 
-    watch(() => authStore.user, (user) => {
+    watch(
+      () => authStore.user,
+      (user) => {
         if (user) {
-            router.push("/")
+          router.push(from.value || '/')
         }
-    }, { immediate: true })
+      },
+      { immediate: true }
+    )
 
     return {
       inputs,

@@ -13,25 +13,22 @@
 
 <script lang="ts">
 import {
+  computed,
   defineComponent,
   onMounted,
   onUnmounted,
-  reactive,
   ref,
-  unref,
-  useContext,
+  useRoute,
   useRouter,
-  watch,
 } from '@nuxtjs/composition-api'
-import { extractMessage } from '~/composables'
-import { extractValidation } from '~/utils'
-import { Tokens } from '~/models'
 import { useAuthStore } from '~/store'
 export default defineComponent({
   setup() {
-    const { $dialog } = useContext()
+    const route = useRoute()
     const router = useRouter()
     const authStore = useAuthStore()
+
+    const from = computed(() => route.value.query.from as string)
 
     const interval = ref()
     onMounted(() => {
@@ -39,9 +36,14 @@ export default defineComponent({
         const user = await authStore.fetchUser()
 
         if (!user) {
-          router.push('/auth/login')
+          router.push({
+            path: '/auth/login',
+            query: {
+              from: from.value
+            }
+          })
         } else if (user.emailConfirmed) {
-          router.push('/')
+          router.push(from.value || '/')
         }
       }, 1000)
     })
