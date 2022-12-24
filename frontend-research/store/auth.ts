@@ -66,7 +66,7 @@ export const useAuthStore = defineStore('auth', {
 
             if (accessToken && refreshToken) {
                 this.updateTokens(accessToken, refreshToken)
-                this.fetchUser().catch(console.log)
+                await this.fetchUser().catch(console.log)
             }
         }
     },

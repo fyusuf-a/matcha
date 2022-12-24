@@ -1,5 +1,5 @@
 <template>
-  <v-app dark>
+  <v-app v-if="loaded" dark>
     <v-navigation-drawer
       v-model="drawer"
       mini-variant
@@ -59,8 +59,11 @@ export default defineComponent({
     const { $vuetify } = useContext()
     const authStore = useAuthStore()
 
-    onBeforeMount(() => {
-      authStore.initialize()
+    const loaded = ref(false)
+
+    onBeforeMount(async () => {
+      await authStore.initialize()
+      loaded.value = true
     })
 
     const drawer = ref(true)
@@ -71,11 +74,17 @@ export default defineComponent({
       drawer,
       logged,
       mobile,
+      loaded,
       items: [
         {
           icon: 'mdi-apps',
           title: 'Welcome',
           to: '/',
+        },
+        {
+          icon: 'mdi-folder-image',
+          title: 'Pictures',
+          to: '/pictures',
         },
       ],
     }
