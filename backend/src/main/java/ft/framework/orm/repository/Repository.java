@@ -1,5 +1,6 @@
 package ft.framework.orm.repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +43,16 @@ public class Repository<T, ID> {
 	
 	public T save(T instance) {
 		return entityManager.persist(instance);
+	}
+	
+	public List<T> saveAll(Iterable<T> iterable) {
+		final var saved = new ArrayList<T>();
+		
+		for (T instance : iterable) {
+			saved.add(save(instance));
+		}
+		
+		return saved;
 	}
 	
 	public T insert(T instance) {

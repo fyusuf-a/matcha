@@ -32,8 +32,17 @@ public class PictureService {
 		return repository.findAllByUser(user, pageable);
 	}
 	
-	public Optional<Picture> findById(long id) {
+	public Optional<Picture> find(long id) {
 		return repository.findById(id);
+	}
+	
+	public Picture setDefault(Picture picture) {
+		final var pictures = repository.findAllByUserAndIsDefaultTrue(picture.getUser());
+		pictures.forEach((picture_) -> picture_.setDefault(false));
+		repository.saveAll(pictures);
+		
+		picture.setDefault(true);
+		return repository.save(picture);
 	}
 	
 	public Picture upload(User user, byte[] bytes) {
@@ -72,7 +81,7 @@ public class PictureService {
 		
 		repository.delete(picture);
 	}
-
+	
 	@SneakyThrows
 	public InputStream read(Picture picture) {
 		return new FileInputStream(toPath(picture).toFile());
