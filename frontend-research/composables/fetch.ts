@@ -8,18 +8,18 @@ import { useQueryValue } from "./route";
 
 interface Options {
     watchAuth?: boolean,
-    clearOnRefresh?: boolean
+    clearOnRefresh?: boolean,
+    params?: {[key: string]: any}
 }
 
 export function usePageable<T>(endpoint: string, options: Options = {}) {
     options = defu(options, {
         watchAuth: false,
-        clearOnRefresh: true
+        clearOnRefresh: true,
+        params: {}
     })
 
     const { $axios } = useContext()
-    const route = useRoute()
-    const router = useRouter()
 
     const response = ref<Page<T>>()
 
@@ -43,6 +43,7 @@ export function usePageable<T>(endpoint: string, options: Options = {}) {
 
         response.value = (await $axios.$get(endpoint, {
             params: {
+                ...options.params,
                 page: page.value,
                 size: size.value,
             }

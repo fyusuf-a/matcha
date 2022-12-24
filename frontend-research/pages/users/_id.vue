@@ -1,16 +1,7 @@
 <template>
-  <v-container v-if="user">
-    <v-row>
-      <v-col cols="12">
-        <v-card>
-          <v-card-title> {{ user.login }} </v-card-title>
-          <v-card-text>
-            <pre><code class="d-block">{{ user }}</code></pre>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+  <div v-if="user">
+    <nuxt-child :key="userId" :user="user" />
+  </div>
 </template>
 
 <script lang="ts">
@@ -38,6 +29,7 @@ export default defineComponent({
 
     return {
       user,
+      userId,
     }
   },
 })
