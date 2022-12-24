@@ -32,11 +32,7 @@ public class Page<T> {
 		final var size = getPageSize();
 		final var count = totalElements / size;
 		
-		if (count % size == 0) {
-			return count;
-		} else {
-			return count + 1;
-		}
+		return count + 1;
 	}
 	
 	public boolean isFirst() {
@@ -46,7 +42,7 @@ public class Page<T> {
 	public boolean isLast() {
 		return pageable.getPage() >= getTotalPages();
 	}
-
+	
 	public static <T> Page<T> empty(Pageable pageable) {
 		return new Page<>(Collections.emptyList(), 0, pageable);
 	}

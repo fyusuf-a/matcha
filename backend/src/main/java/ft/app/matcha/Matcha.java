@@ -223,7 +223,7 @@ public class Matcha {
 				new QueryHandlerMethodArgumentResolver(),
 				new RequestHandlerMethodArgumentResolver(),
 				new ResponseHandlerMethodArgumentResolver(),
-				new PageableHandlerMethodArgumentResolver(),
+				new PageableHandlerMethodArgumentResolver(validator),
 				new AuthenticationHandlerMethodArgumentResolver(),
 				new PrincipalHandlerMethodArgumentResolver(),
 				new FormDataHandlerMethodArgumentResolver(),
