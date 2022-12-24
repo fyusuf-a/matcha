@@ -81,11 +81,6 @@ export default defineComponent({
           to: '/',
         },
         {
-          icon: 'mdi-folder-image',
-          title: 'Pictures',
-          to: '/pictures',
-        },
-        {
           icon: 'mdi-account',
           title: 'Users',
           to: '/users',

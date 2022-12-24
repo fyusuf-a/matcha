@@ -5,6 +5,9 @@
         <user-edit-info />
       </v-col>
       <v-col cols="12">
+        <user-edit-picture />
+      </v-col>
+      <v-col cols="12">
         <user-edit-tags />
       </v-col>
     </v-row>

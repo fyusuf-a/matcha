@@ -43,6 +43,7 @@
       </v-form>
     </v-card-text>
     <v-card-actions>
+      <v-spacer />
       <v-btn color="primary" form="info-form" type="submit" :loading="loading">
         save
       </v-btn>
