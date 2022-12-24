@@ -72,6 +72,7 @@ public class MySQLDialect implements Dialect {
 		comparisonToCode.put(Comparison.Type.LESS_THAN_EQUALS, "<=");
 		comparisonToCode.put(Comparison.Type.GREATER_THAN, ">");
 		comparisonToCode.put(Comparison.Type.GREATER_THAN_EQUALS, ">=");
+		comparisonToCode.put(Comparison.Type.LIKE, "LIKE");
 	}
 	
 	@Override

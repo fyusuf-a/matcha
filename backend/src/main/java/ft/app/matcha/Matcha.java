@@ -32,6 +32,14 @@ import ft.app.matcha.domain.picture.Picture;
 import ft.app.matcha.domain.picture.PictureController;
 import ft.app.matcha.domain.picture.PictureRepository;
 import ft.app.matcha.domain.picture.PictureService;
+import ft.app.matcha.domain.tag.Tag;
+import ft.app.matcha.domain.tag.TagController;
+import ft.app.matcha.domain.tag.TagRepository;
+import ft.app.matcha.domain.tag.TagService;
+import ft.app.matcha.domain.tag.UserTag;
+import ft.app.matcha.domain.tag.UserTagController;
+import ft.app.matcha.domain.tag.UserTagRepository;
+import ft.app.matcha.domain.tag.UserTagService;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserController;
 import ft.app.matcha.domain.user.UserRepository;
@@ -111,6 +119,8 @@ public class Matcha {
 				Like.class,
 				EmailToken.class,
 				Picture.class,
+				Tag.class,
+				UserTag.class,
 			});
 			
 			final var eventPublisher = new ApplicationEventPublisher();
@@ -122,6 +132,8 @@ public class Matcha {
 			final var emailTokenRepository = new EmailTokenRepository(ormConfiguration.getEntityManager());
 			final var pictureRepository = new PictureRepository(ormConfiguration.getEntityManager());
 			final var likeRepository = new LikeRepository(ormConfiguration.getEntityManager());
+			final var tagRepository = new TagRepository(ormConfiguration.getEntityManager());
+			final var userTagRepository = new UserTagRepository(ormConfiguration.getEntityManager());
 			
 			final var emailSender = new EmailSender(emailConfiguration);
 			
@@ -133,6 +145,8 @@ public class Matcha {
 			final var notificationService = new NotificationService(notificationRepository);
 			final var pictureService = new PictureService(pictureRepository, matchaConfiguration);
 			final var likeService = new LikeService(likeRepository, eventPublisher);
+			final var tagService = new TagService(tagRepository);
+			final var userTagService = new UserTagService(userTagRepository, matchaConfiguration);
 			
 			final var services = Arrays.asList(new Object[] {
 				userService,
@@ -143,6 +157,8 @@ public class Matcha {
 				emailTokenService,
 				pictureService,
 				likeService,
+				tagService,
+				userTagService,
 			});
 			
 			final var eventListenerFactory = new EventListenerFactory(eventPublisher);
@@ -157,7 +173,9 @@ public class Matcha {
 			routeRegistry.add(new AuthController(authService));
 			routeRegistry.add(new PictureController(userService, pictureService));
 			routeRegistry.add(new UserController(userRepository));
-			routeRegistry.add(new LikeController(userService, likeService));
+			routeRegistry.add(new LikeController(likeService, userService));
+			routeRegistry.add(new TagController(tagService, userTagService));
+			routeRegistry.add(new UserTagController(userTagService, userService, tagService));
 			
 			final var swagger = new OpenAPI()
 				.schemaRequirement("JWT", new SecurityScheme()

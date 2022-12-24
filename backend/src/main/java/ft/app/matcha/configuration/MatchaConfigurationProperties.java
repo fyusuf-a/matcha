@@ -11,5 +11,7 @@ public class MatchaConfigurationProperties {
 	
 	private long maximumPictureCount = 5;
 	private String pictureStorage = "./pictures/";
+
+	private long maximumTagCount = 5;
 	
 }

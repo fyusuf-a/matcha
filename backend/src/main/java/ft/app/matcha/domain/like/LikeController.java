@@ -23,8 +23,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LikeController {
 	
-	private final UserService userService;
 	private final LikeService likeService;
+	private final UserService userService;
 	
 	@GetMapping
 	public Page<LikeDto> list(
