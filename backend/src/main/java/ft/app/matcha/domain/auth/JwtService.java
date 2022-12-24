@@ -9,6 +9,7 @@ import ft.app.matcha.domain.auth.exception.JwtException;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserRepository;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -58,6 +59,8 @@ public class JwtService {
 			throw JwtException.badSignature();
 		} catch (MalformedJwtException exception) {
 			throw JwtException.malformed();
+		} catch (ExpiredJwtException exception) {
+			throw JwtException.expired();
 		}
 	}
 	
