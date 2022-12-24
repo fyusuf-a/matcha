@@ -9,15 +9,23 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import ft.app.matcha.domain.user.User;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import lombok.experimental.FieldNameConstants;
 
 @Entity
-@Table
+@Table(uniqueConstraints = {
+	@UniqueConstraint(columnNames = {
+		Like.Fields.user,
+		Like.Fields.peer,
+	})
+})
 @Data
 @Accessors(chain = true)
+@FieldNameConstants
 public class Like {
 	
 	@Id

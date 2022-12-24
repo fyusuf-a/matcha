@@ -22,6 +22,9 @@ import ft.app.matcha.domain.auth.RefreshToken;
 import ft.app.matcha.domain.auth.RefreshTokenRepository;
 import ft.app.matcha.domain.auth.RefreshTokenService;
 import ft.app.matcha.domain.like.Like;
+import ft.app.matcha.domain.like.LikeController;
+import ft.app.matcha.domain.like.LikeRepository;
+import ft.app.matcha.domain.like.LikeService;
 import ft.app.matcha.domain.notification.Notification;
 import ft.app.matcha.domain.notification.NotificationRepository;
 import ft.app.matcha.domain.notification.NotificationService;
@@ -118,6 +121,7 @@ public class Matcha {
 			final var notificationRepository = new NotificationRepository(ormConfiguration.getEntityManager());
 			final var emailTokenRepository = new EmailTokenRepository(ormConfiguration.getEntityManager());
 			final var pictureRepository = new PictureRepository(ormConfiguration.getEntityManager());
+			final var likeRepository = new LikeRepository(ormConfiguration.getEntityManager());
 			
 			final var emailSender = new EmailSender(emailConfiguration);
 			
@@ -128,6 +132,7 @@ public class Matcha {
 			final var authService = new AuthService(userService, refreshTokenService, emailTokenService, jwtService, eventPublisher);
 			final var notificationService = new NotificationService(notificationRepository);
 			final var pictureService = new PictureService(pictureRepository, matchaConfiguration);
+			final var likeService = new LikeService(likeRepository, eventPublisher);
 			
 			final var services = Arrays.asList(new Object[] {
 				userService,
@@ -137,6 +142,7 @@ public class Matcha {
 				notificationService,
 				emailTokenService,
 				pictureService,
+				likeService,
 			});
 			
 			final var eventListenerFactory = new EventListenerFactory(eventPublisher);
@@ -151,6 +157,7 @@ public class Matcha {
 			routeRegistry.add(new AuthController(authService));
 			routeRegistry.add(new PictureController(userService, pictureService));
 			routeRegistry.add(new UserController(userRepository));
+			routeRegistry.add(new LikeController(userService, likeService));
 			
 			final var swagger = new OpenAPI()
 				.schemaRequirement("JWT", new SecurityScheme()
