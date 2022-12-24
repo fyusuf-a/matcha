@@ -13,6 +13,7 @@ import ft.framework.mvc.annotation.Variable;
 import ft.framework.mvc.domain.Page;
 import ft.framework.mvc.domain.Pageable;
 import ft.framework.swagger.annotation.ApiOperation;
+import ft.framework.validation.annotation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @Controller
@@ -35,7 +36,7 @@ public class TagController {
 	@PostMapping
 	@ApiOperation(summary = "Create a tag.")
 	public Tag create(
-		@Body TagCreateForm form
+		@Body @Valid TagCreateForm form
 	) {
 		return tagService.create(form.getName(), form.getColor());
 	}

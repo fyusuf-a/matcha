@@ -172,7 +172,7 @@ public class Matcha {
 			
 			routeRegistry.add(new AuthController(authService));
 			routeRegistry.add(new PictureController(userService, pictureService));
-			routeRegistry.add(new UserController(userRepository));
+			routeRegistry.add(new UserController(userService));
 			routeRegistry.add(new LikeController(likeService, userService));
 			routeRegistry.add(new TagController(tagService, userTagService));
 			routeRegistry.add(new UserTagController(userTagService, userService, tagService));

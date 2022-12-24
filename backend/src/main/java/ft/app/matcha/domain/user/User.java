@@ -28,6 +28,7 @@ public class User {
 	public static final int LOGIN_MIN_LENGTH = 3;
 	public static final int LOGIN_MAX_LENGTH = 48;
 	public static final int EMAIL_MAX_LENGTH = 128;
+	public static final int BIOGRAPHY_MAX_LENGTH = 4000;
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,7 +51,7 @@ public class User {
 	@Column(nullable = false)
 	private String lastName;
 	
-	@Column
+	@Column(length = Short.MAX_VALUE)
 	private String biography;
 	
 	@Column
