@@ -1,13 +1,10 @@
 package ft.framework.mvc.resolver.argument.impl;
 
 import java.lang.reflect.Parameter;
-import java.util.Set;
 
 import ft.framework.mvc.domain.Pageable;
 import ft.framework.mvc.resolver.argument.HandlerMethodArgumentResolver;
-import ft.framework.validation.ValidationException;
 import ft.framework.validation.Validator;
-import ft.framework.validation.constraint.ConstraintViolation;
 import lombok.RequiredArgsConstructor;
 import spark.Request;
 import spark.Response;
@@ -28,7 +25,6 @@ public class PageableHandlerMethodArgumentResolver implements HandlerMethodArgum
 		return Pageable.class.equals(method.getType());
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public Object resolveArgument(Parameter parameter, Request request, Response response) throws Exception {
 		final var page = getOrDefault(request, QUERY_PAGE, DEFAULT_PAGE);
@@ -36,12 +32,7 @@ public class PageableHandlerMethodArgumentResolver implements HandlerMethodArgum
 		
 		final var pageable = new Pageable(size, page);
 		
-		final var violations = validator.validate(pageable);
-		if (!violations.isEmpty()) {
-			throw new ValidationException((Set<ConstraintViolation<?>>) (Object) violations);
-		}
-		
-		return pageable;
+		return validator.validateOrThrow(pageable);
 	}
 	
 	public long getOrDefault(Request request, String query, long defaultValue) {

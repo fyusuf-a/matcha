@@ -7,7 +7,10 @@ import javax.servlet.MultipartConfigElement;
 import org.apache.commons.lang3.StringUtils;
 
 import ft.framework.mvc.annotation.FormData;
+import ft.framework.mvc.annotation.ResponseErrorProperty;
 import ft.framework.mvc.resolver.argument.HandlerMethodArgumentResolver;
+import ft.framework.mvc.resolver.argument.MissingArgumentException;
+import lombok.Getter;
 import spark.Request;
 import spark.Response;
 
@@ -38,10 +41,25 @@ public class FormDataHandlerMethodArgumentResolver implements HandlerMethodArgum
 		
 		final var value = request.raw().getPart(name);
 		if (value == null) {
-			throw new Exception(String.format("missing `%s`", name));
+			throw new MissingPartException(name);
 		}
 		
 		return value;
+	}
+	
+	@SuppressWarnings("serial")
+	public static class MissingPartException extends MissingArgumentException {
+		
+		@Getter
+		@ResponseErrorProperty
+		private final String name;
+		
+		public MissingPartException(String name) {
+			super(String.format("missing `%s` part", name));
+			
+			this.name = name;
+		}
+		
 	}
 	
 }
