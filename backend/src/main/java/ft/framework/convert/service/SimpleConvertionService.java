@@ -96,7 +96,12 @@ public class SimpleConvertionService implements ConvertionService {
 		}
 		
 		final var converter = findConverter(sourceType, targetType);
-		return converter.convert(value);
+		
+		try {
+			return converter.convert(value);
+		} catch (Exception exception) {
+			throw new ConversionException(value, sourceType, targetType, exception);
+		}
 	}
 	
 	@SuppressWarnings({ "rawtypes" })
