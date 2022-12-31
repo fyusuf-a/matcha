@@ -17,4 +17,6 @@ public class Pageable {
 	@PositiveOrZero
 	private final long page;
 	
+	private final Sort sort;
+	
 }
