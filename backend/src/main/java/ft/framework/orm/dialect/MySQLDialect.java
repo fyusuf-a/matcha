@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.sql.SQLType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 import com.mysql.cj.MysqlType;
 
 import ft.framework.mvc.domain.Pageable;
+import ft.framework.mvc.domain.Sort;
 import ft.framework.orm.error.DuplicateRelationshipException;
 import ft.framework.orm.error.DuplicateValueException;
 import ft.framework.orm.mapping.Column;
@@ -38,6 +40,7 @@ public class MySQLDialect implements Dialect {
 	private static final Map<Class<?>, SQLType> simpleTypes = new HashMap<>();
 	private static final Map<Branch.Type, String> branchToCode = new EnumMap<>(Branch.Type.class);
 	private static final Map<Comparison.Type, String> comparisonToCode = new EnumMap<>(Comparison.Type.class);
+	private static final Map<Sort.Direction, String> sortDirectionToCode = new EnumMap<>(Sort.Direction.class);
 	
 	static {
 		simpleTypes.put(long.class, MysqlType.BIGINT);
@@ -73,6 +76,9 @@ public class MySQLDialect implements Dialect {
 		comparisonToCode.put(Comparison.Type.GREATER_THAN, ">");
 		comparisonToCode.put(Comparison.Type.GREATER_THAN_EQUALS, ">=");
 		comparisonToCode.put(Comparison.Type.LIKE, "LIKE");
+		
+		sortDirectionToCode.put(Sort.Direction.ASCENDING, "ASC");
+		sortDirectionToCode.put(Sort.Direction.DESCENDING, "DESC");
 	}
 	
 	@Override
@@ -387,6 +393,11 @@ public class MySQLDialect implements Dialect {
 		}
 		
 		if (pageable != null) {
+			final var sort = pageable.getSort();
+			if (!sort.isEmpty()) {
+				sql.append(buildOrderBy(table, sort));
+			}
+			
 			sql.append(buildLimitAndOffset(pageable));
 		}
 		
@@ -449,6 +460,41 @@ public class MySQLDialect implements Dialect {
 			.append(quote(columns, false))
 			.append(" FROM ")
 			.append(quote(table));
+	}
+	
+	public String buildOrderBy(Table table, Sort sort) {
+		final var orders = sort.getOrders();
+		final var pairs = new ArrayList<Map.Entry<Column, Sort.Direction>>(orders.size());
+		
+		for (final var order : orders) {
+			final var column = table.findColumnByFieldName(order.getProperty());
+			
+			if (column == null) {
+				continue;
+			}
+			
+			pairs.add(Map.entry(column, order.getDirection()));
+		}
+		
+		if (pairs.isEmpty()) {
+			return "";
+		}
+		
+		return new StringBuilder()
+			.append(" ORDER BY ")
+			.append(pairs.stream().map(this::buildSort).collect(Collectors.joining(", ")))
+			.toString();
+	}
+	
+	public String buildSort(Map.Entry<Column, Sort.Direction> entry) {
+		final var column = entry.getKey();
+		final var direction = entry.getValue();
+		
+		return new StringBuilder()
+			.append(quote(column))
+			.append(" ")
+			.append(sortDirectionToCode.get(direction))
+			.toString();
 	}
 	
 	public Object buildLimitAndOffset(Pageable pageable) {

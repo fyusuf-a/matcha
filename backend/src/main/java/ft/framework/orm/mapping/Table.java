@@ -47,11 +47,20 @@ public class Table implements Named {
 	}
 	
 	// TODO Use lookup table
-	public Column getColumnByFieldName(String name) {
+	public Column findColumnByFieldName(String name) {
 		for (final var column : columns) {
 			if (column.getField().getName().equals(name)) {
 				return column;
 			}
+		}
+		
+		return null;
+	}
+	
+	public Column getColumnByFieldName(String name) {
+		final var column = findColumnByFieldName(name);
+		if (column != null) {
+			return column;
 		}
 		
 		throw new NoSuchElementException("no column with field name: " + name);
