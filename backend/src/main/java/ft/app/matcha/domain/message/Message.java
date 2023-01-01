@@ -11,6 +11,7 @@ import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import ft.app.matcha.domain.user.User;
@@ -45,6 +46,7 @@ public class Message {
 	private User peer;
 	
 	@Column(nullable = false)
+	@JsonFormat(shape = JsonFormat.Shape.STRING)
 	private LocalDateTime createdAt;
 	
 	public long getUserId() {
