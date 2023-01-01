@@ -12,6 +12,7 @@ import ft.app.matcha.domain.message.event.MessageCreatedEvent;
 import ft.app.matcha.domain.notification.event.NotificationCreatedEvent;
 import ft.app.matcha.domain.notification.model.NotificationPatchForm;
 import ft.app.matcha.domain.user.User;
+import ft.app.matcha.domain.user.event.UserViewedEvent;
 import ft.framework.event.ApplicationEventPublisher;
 import ft.framework.event.annotation.EventListener;
 import ft.framework.mvc.domain.Page;
@@ -81,7 +82,13 @@ public class NotificationService {
 	}
 	
 	/* The user's profile has been checked. */
-	// TODO
+	@EventListener
+	public void onUserViewed(UserViewedEvent event) {
+		final var user = event.getUser();
+		final var viewer = event.getViewer();
+		
+		create(user, Notification.Type.PROFILE_CHECKED, NotificationFormatter.formatProfileChecked(viewer));
+	}
 	
 	/* The user received a message. */
 	@EventListener
@@ -101,7 +108,7 @@ public class NotificationService {
 		final var user = event.getUser();
 		final var peer = event.getPeer();
 		
-		create(peer, Notification.Type.UNLIKED, NotificationFormatter.formatUnliked(user, peer));
+		create(peer, Notification.Type.UNLIKED, NotificationFormatter.formatUnliked(user));
 	}
 	
 }

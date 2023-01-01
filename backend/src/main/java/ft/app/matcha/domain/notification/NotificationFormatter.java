@@ -17,7 +17,7 @@ public class NotificationFormatter {
 		);
 	}
 
-	public static Pair<String, String> formatUnliked(User user, User peer) {
+	public static Pair<String, String> formatUnliked(User user) {
 		return Pair.of(
 			"%s unliked you!".formatted(user.getFirstName()),
 			toUserLink(user)
@@ -30,6 +30,13 @@ public class NotificationFormatter {
 		return Pair.of(
 			"%s sent you a message!".formatted(user.getFirstName()),
 			"%s/messages".formatted(toUserLink(user))
+		);
+	}
+
+	public static Pair<String, String> formatProfileChecked(User viewer) {
+		return Pair.of(
+			"%s viewed your profile!".formatted(viewer.getFirstName()),
+			toUserLink(viewer)
 		);
 	}
 	
