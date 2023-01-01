@@ -43,15 +43,15 @@ public class Notification {
 	private User user;
 	
 	@Column(nullable = false)
-	@JsonFormat(shape = JsonFormat.Shape.STRING)
-	private LocalDateTime createdAt;
-	
-	@Column(nullable = false)
 	private boolean read;
 	
 	@Column
 	@JsonFormat(shape = JsonFormat.Shape.STRING)
 	private LocalDateTime readAt;
+	
+	@Column(nullable = false)
+	@JsonFormat(shape = JsonFormat.Shape.STRING)
+	private LocalDateTime createdAt;
 	
 	public enum Type {
 		

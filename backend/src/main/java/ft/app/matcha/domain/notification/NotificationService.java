@@ -1,6 +1,7 @@
 package ft.app.matcha.domain.notification;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -9,6 +10,7 @@ import ft.app.matcha.domain.like.event.LikeEvent;
 import ft.app.matcha.domain.like.event.UnlikeEvent;
 import ft.app.matcha.domain.message.event.MessageCreatedEvent;
 import ft.app.matcha.domain.notification.event.NotificationCreatedEvent;
+import ft.app.matcha.domain.notification.model.NotificationPatchForm;
 import ft.app.matcha.domain.user.User;
 import ft.framework.event.ApplicationEventPublisher;
 import ft.framework.event.annotation.EventListener;
@@ -21,6 +23,10 @@ public class NotificationService {
 	
 	private final NotificationRepository repository;
 	private final ApplicationEventPublisher eventPublisher;
+	
+	public Optional<Notification> find(long id) {
+		return repository.findById(id);
+	}
 	
 	public Page<Notification> findAll(User user, boolean includeAll, Pageable pageable) {
 		if (includeAll) {
@@ -47,6 +53,15 @@ public class NotificationService {
 	
 	public Notification create(User user, Notification.Type type, Pair<String, String> contentAndLink) {
 		return create(user, type, contentAndLink.getLeft(), contentAndLink.getRight());
+	}
+	
+	public Notification patch(Notification notification, NotificationPatchForm form) {
+		Optional.ofNullable(form.getRead()).ifPresent((read) -> {
+			notification.setRead(read);
+			notification.setReadAt(read ? LocalDateTime.now() : null);
+		});
+		
+		return notification;
 	}
 	
 	@EventListener
