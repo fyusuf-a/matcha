@@ -22,13 +22,7 @@
         </v-list>
         <v-card-text>
           <v-form @submit.prevent>
-            <v-text-field
-              v-model="content"
-              solo-inverted
-              hide-details
-              @keydown.enter="send"
-              autofocus
-            />
+            <message-input :peer="user" />
           </v-form>
         </v-card-text>
       </v-card>
@@ -43,9 +37,9 @@ import {
   onUnmounted,
   PropType,
   ref,
+  toRefs,
   useContext,
 } from '@nuxtjs/composition-api'
-import { extractMessage } from '~/composables'
 import { Message, User } from '~/models'
 import { useAuthStore, useSocketStore } from '~/store'
 
@@ -59,7 +53,8 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const { $axios, $dialog } = useContext()
+    const { user } = toRefs(props)
+
     const authStore = useAuthStore()
     const socketStore = useSocketStore()
 
@@ -68,10 +63,8 @@ export default defineComponent({
     const onPacket = (payload: Message) => {
       if (
         !(
-          (payload.userId == authStore.user?.id &&
-            payload.peerId == props.user.id) ||
-          (payload.userId == props.user.id &&
-            payload.peerId == authStore.user?.id)
+          (payload.userId == authStore.user?.id && payload.peerId == user.value.id) ||
+          (payload.userId == user.value.id && payload.peerId == authStore.user?.id)
         )
       ) {
         return
@@ -94,33 +87,12 @@ export default defineComponent({
         return authStore.user!
       }
 
-      return props.user
-    }
-
-    const content = ref('')
-    const send = async () => {
-      if (!content.value) {
-        return
-      }
-
-      try {
-        await $axios.$post('/api/messages', {
-          content: content.value,
-          peerId: props.user.id,
-        })
-
-        content.value = ''
-      } catch (error) {
-        const message = extractMessage(error)
-        $dialog.notify.error(message)
-      }
+      return user.value
     }
 
     return {
       messages,
       getUser,
-      content,
-      send,
     }
   },
 })
