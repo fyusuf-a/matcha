@@ -21,6 +21,9 @@
             <v-btn color="primary" :to="`/users/${user.id}/likes`">
               who liked?
             </v-btn>
+            <v-btn color="primary" :to="`/users/${user.id}/messages`">
+              messages
+            </v-btn>
           </v-card-actions>
         </v-card>
       </v-col>

@@ -1,5 +1,6 @@
 <template>
   <v-app v-if="loaded" dark>
+    <socket-disconnected />
     <v-navigation-drawer
       v-model="drawer"
       mini-variant
@@ -52,16 +53,18 @@ import {
   toRefs,
   useContext,
 } from '@nuxtjs/composition-api'
-import { useAuthStore } from '~/store'
+import { useAuthStore, useSocketStore } from '~/store'
 export default defineComponent({
   setup() {
     const { $vuetify } = useContext()
     const authStore = useAuthStore()
+    const socketStore = useSocketStore()
 
     const loaded = ref(false)
 
     onBeforeMount(async () => {
       await authStore.initialize()
+      await socketStore.initialize()
       loaded.value = true
     })
 
