@@ -6,9 +6,7 @@
           <v-card-title>
             {{ user.login }}
             <v-spacer />
-            <v-btn color="primary" small :to="`/users/@me/edit`">
-              edit
-            </v-btn>
+            <v-btn color="primary" small :to="`/users/@me/edit`"> edit </v-btn>
           </v-card-title>
           <v-card-text>
             <pre><code class="d-block">{{ user }}</code></pre>
@@ -34,6 +32,7 @@
 <script lang="ts">
 import {
   defineComponent,
+  onMounted,
   PropType,
   ref,
   toRefs,
@@ -41,6 +40,7 @@ import {
   useFetch,
 } from '@nuxtjs/composition-api'
 import { Tag, User } from '~/models'
+import { useAuthStore } from '~/store'
 export default defineComponent({
   props: {
     user: {
@@ -57,6 +57,13 @@ export default defineComponent({
       tags.value = (
         await $axios.$get(`/api/users/${user.value.id}/tags`)
       ).content
+    })
+
+    const authStore = useAuthStore()
+    onMounted(() => {
+      if (authStore.logged) {
+        $axios.post(`/api/users/${user.value.id}/view`).catch(() => void 0)
+      }
     })
 
     return {
