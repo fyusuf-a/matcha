@@ -25,6 +25,10 @@ import ft.app.matcha.domain.like.Like;
 import ft.app.matcha.domain.like.LikeController;
 import ft.app.matcha.domain.like.LikeRepository;
 import ft.app.matcha.domain.like.LikeService;
+import ft.app.matcha.domain.message.Message;
+import ft.app.matcha.domain.message.MessageController;
+import ft.app.matcha.domain.message.MessageRepository;
+import ft.app.matcha.domain.message.MessageService;
 import ft.app.matcha.domain.notification.Notification;
 import ft.app.matcha.domain.notification.NotificationRepository;
 import ft.app.matcha.domain.notification.NotificationService;
@@ -32,6 +36,7 @@ import ft.app.matcha.domain.picture.Picture;
 import ft.app.matcha.domain.picture.PictureController;
 import ft.app.matcha.domain.picture.PictureRepository;
 import ft.app.matcha.domain.picture.PictureService;
+import ft.app.matcha.domain.socket.WebSocketService;
 import ft.app.matcha.domain.tag.Tag;
 import ft.app.matcha.domain.tag.TagController;
 import ft.app.matcha.domain.tag.TagRepository;
@@ -45,6 +50,7 @@ import ft.app.matcha.domain.user.UserController;
 import ft.app.matcha.domain.user.UserRepository;
 import ft.app.matcha.domain.user.UserService;
 import ft.app.matcha.security.JwtAuthenticationFilter;
+import ft.app.matcha.security.JwtAuthenticator;
 import ft.framework.convert.service.ConvertionService;
 import ft.framework.convert.service.SimpleConvertionService;
 import ft.framework.event.ApplicationEventPublisher;
@@ -76,6 +82,7 @@ import ft.framework.swagger.controller.SwaggerController;
 import ft.framework.trace.filter.LoggingFilter;
 import ft.framework.validation.ValidationException;
 import ft.framework.validation.Validator;
+import ft.framework.websocket.WebSocketHandler;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -121,7 +128,10 @@ public class Matcha {
 				Picture.class,
 				Tag.class,
 				UserTag.class,
+				Message.class,
 			});
+			
+			final var webSocket = WebSocketHandler.create(objectMapper);
 			
 			final var eventPublisher = new ApplicationEventPublisher();
 			final var taskScheduler = new WispTaskScheduler();
@@ -134,6 +144,7 @@ public class Matcha {
 			final var likeRepository = new LikeRepository(ormConfiguration.getEntityManager());
 			final var tagRepository = new TagRepository(ormConfiguration.getEntityManager());
 			final var userTagRepository = new UserTagRepository(ormConfiguration.getEntityManager());
+			final var messageRepository = new MessageRepository(ormConfiguration.getEntityManager());
 			
 			final var emailSender = new EmailSender(emailConfiguration);
 			
@@ -147,6 +158,9 @@ public class Matcha {
 			final var likeService = new LikeService(likeRepository, eventPublisher);
 			final var tagService = new TagService(tagRepository);
 			final var userTagService = new UserTagService(userTagRepository, matchaConfiguration);
+			final var messageService = new MessageService(messageRepository, eventPublisher);
+			final var jwtAuthenticator = new JwtAuthenticator(jwtService);
+			final var webSocketService = new WebSocketService(webSocket, jwtAuthenticator);
 			
 			final var services = Arrays.asList(new Object[] {
 				userService,
@@ -159,6 +173,8 @@ public class Matcha {
 				likeService,
 				tagService,
 				userTagService,
+				messageService,
+				webSocketService,
 			});
 			
 			final var eventListenerFactory = new EventListenerFactory(eventPublisher);
@@ -167,7 +183,7 @@ public class Matcha {
 			final var scheduledFactory = new ScheduledFactory(taskScheduler);
 			services.forEach(scheduledFactory::scan);
 			
-			final var mvcConfiguration = configureMvc(objectMapper, validator, convertionService, jwtService);
+			final var mvcConfiguration = configureMvc(objectMapper, validator, convertionService, jwtAuthenticator);
 			final var routeRegistry = new RouteRegistry(mvcConfiguration);
 			
 			routeRegistry.add(new AuthController(authService));
@@ -176,6 +192,7 @@ public class Matcha {
 			routeRegistry.add(new LikeController(likeService, userService));
 			routeRegistry.add(new TagController(tagService, userTagService));
 			routeRegistry.add(new UserTagController(userTagService, userService, tagService));
+			routeRegistry.add(new MessageController(messageService, userService));
 			
 			final var swagger = new OpenAPI()
 				.schemaRequirement("JWT", new SecurityScheme()
@@ -231,7 +248,7 @@ public class Matcha {
 	}
 	
 	@SneakyThrows
-	public static MvcConfiguration configureMvc(ObjectMapper objectMapper, Validator validator, ConvertionService conversionService, JwtService jwtService) {
+	public static MvcConfiguration configureMvc(ObjectMapper objectMapper, Validator validator, ConvertionService conversionService, JwtAuthenticator jwtAuthenticator) {
 		log.info("Waking up");
 		
 		return MvcConfiguration.builder()
@@ -253,7 +270,7 @@ public class Matcha {
 				new PrincipalHandlerMethodArgumentResolver(),
 				new FormDataHandlerMethodArgumentResolver(),
 				new BodyHandlerMethodArgumentResolver(objectMapper)))
-			.filter(new JwtAuthenticationFilter(jwtService))
+			.filter(new JwtAuthenticationFilter(jwtAuthenticator))
 			.filter(new LoggingFilter())
 			.build();
 	}
