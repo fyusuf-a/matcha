@@ -1,6 +1,7 @@
 package ft.app.matcha.domain.socket;
 
 import ft.app.matcha.domain.message.event.MessageCreatedEvent;
+import ft.app.matcha.domain.notification.event.NotificationCreatedEvent;
 import ft.app.matcha.domain.socket.model.AuthenticatePayload;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.security.JwtAuthenticator;
@@ -11,6 +12,7 @@ public class WebSocketService {
 	
 	public static final String AUTHENTICATE_EVENT = "authenticate";
 	public static final String MESSAGE_CREATED_EVENT = "message.created";
+	public static final String NOTIFICATION_CREATED_EVENT = "notification.created";
 	
 	private final WebSocketHandler webSocket;
 	
@@ -38,6 +40,13 @@ public class WebSocketService {
 		
 		sendToUser(message.getUser(), MESSAGE_CREATED_EVENT, message);
 		sendToUser(message.getPeer(), MESSAGE_CREATED_EVENT, message);
+	}
+	
+	@EventListener
+	public void onNotificationCreated(NotificationCreatedEvent event) {
+		final var notification = event.getNotification();
+		
+		sendToUser(notification.getUser(), NOTIFICATION_CREATED_EVENT, notification);
 	}
 	
 	public <T> void sendToUser(User user, String event, T payload) {

@@ -30,6 +30,7 @@ import ft.app.matcha.domain.message.MessageController;
 import ft.app.matcha.domain.message.MessageRepository;
 import ft.app.matcha.domain.message.MessageService;
 import ft.app.matcha.domain.notification.Notification;
+import ft.app.matcha.domain.notification.NotificationController;
 import ft.app.matcha.domain.notification.NotificationRepository;
 import ft.app.matcha.domain.notification.NotificationService;
 import ft.app.matcha.domain.picture.Picture;
@@ -153,7 +154,7 @@ public class Matcha {
 			final var refreshTokenService = new RefreshTokenService(refreshTokenRepository, authConfiguration);
 			final var emailTokenService = new EmailTokenService(emailTokenRepository, authConfiguration, emailSender, eventPublisher);
 			final var authService = new AuthService(userService, refreshTokenService, emailTokenService, jwtService, eventPublisher);
-			final var notificationService = new NotificationService(notificationRepository);
+			final var notificationService = new NotificationService(notificationRepository, eventPublisher);
 			final var pictureService = new PictureService(pictureRepository, matchaConfiguration);
 			final var likeService = new LikeService(likeRepository, eventPublisher);
 			final var tagService = new TagService(tagRepository);
@@ -193,6 +194,7 @@ public class Matcha {
 			routeRegistry.add(new TagController(tagService, userTagService));
 			routeRegistry.add(new UserTagController(userTagService, userService, tagService));
 			routeRegistry.add(new MessageController(messageService, userService));
+			routeRegistry.add(new NotificationController(notificationService));
 			
 			final var swagger = new OpenAPI()
 				.schemaRequirement("JWT", new SecurityScheme()
