@@ -102,6 +102,8 @@ public class ParameterBuilder {
 	public static Parameter buildQueryParameter(OpenAPI swagger, java.lang.reflect.Parameter methodParameter, Query annotation) {
 		final var parameter = new QueryParameter();
 		
+		parameter.setRequired(annotation.required());
+		
 		final var name = annotation.name();
 		if (StringUtils.isNotBlank(name)) {
 			parameter.setName(name);
