@@ -20,18 +20,20 @@ public class MessageService {
 	}
 	
 	public Message create(User user, User peer, String content) {
-		final var message = new Message()
-			.setUser(user)
-			.setPeer(peer)
-			.setContent(content)
-			.setCreatedAt(LocalDateTime.now());
+		final var message = repository.save(
+			new Message()
+				.setUser(user)
+				.setPeer(peer)
+				.setContent(content)
+				.setCreatedAt(LocalDateTime.now())
+		);
 		
 		eventPublisher.publishEvent(new MessageCreatedEvent(this, message));
 		
 		return message;
 	}
 	
-	// @Scheduled(fixedDelay = 1000)
+//	@Scheduled(fixedDelay = 1000)
 	public void fake() {
 		create(new User().setId(1), new User().setId(2), "Hey its %s!".formatted(System.currentTimeMillis()));
 	}
