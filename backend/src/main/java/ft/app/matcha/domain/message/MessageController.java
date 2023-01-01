@@ -44,7 +44,7 @@ public class MessageController {
 		@Body @Valid MessageCreateForm form,
 		@Principal User currentUser
 	) {
-		final var peerId = form.getUserId();
+		final var peerId = form.getPeerId();
 		final var peer = userService.find(peerId)
 			.orElseThrow(() -> new UserNotFoundException(peerId));
 		

@@ -20,6 +20,6 @@ public class MessageCreateForm {
 	private String content;
 	
 	@NotNull
-	private Long userId;
+	private Long peerId;
 	
 }
