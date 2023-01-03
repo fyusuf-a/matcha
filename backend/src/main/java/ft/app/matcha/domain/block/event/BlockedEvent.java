@@ -6,11 +6,11 @@ import lombok.Getter;
 
 @SuppressWarnings("serial")
 @Getter
-public class BlockEvent extends ApplicationEvent {
+public class BlockedEvent extends ApplicationEvent {
 	
 	private final Block block;
 	
-	public BlockEvent(Object source, Block block) {
+	public BlockedEvent(Object source, Block block) {
 		super(source);
 		
 		this.block = block;

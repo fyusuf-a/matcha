@@ -61,6 +61,9 @@ public class User {
 	private SexualOrientation sexualOrientation;
 	
 	@Column(nullable = false)
+	private long fame;
+	
+	@Column(nullable = false)
 	private boolean emailConfirmed;
 	
 	@Column

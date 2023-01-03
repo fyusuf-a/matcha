@@ -6,12 +6,12 @@ import lombok.Getter;
 
 @SuppressWarnings("serial")
 @Getter
-public class UnlikeEvent extends ApplicationEvent {
+public class UnlikedEvent extends ApplicationEvent {
 	
 	private final User user;
 	private final User peer;
 	
-	public UnlikeEvent(Object source, User user, User peer) {
+	public UnlikedEvent(Object source, User user, User peer) {
 		super(source);
 		
 		this.user = user;

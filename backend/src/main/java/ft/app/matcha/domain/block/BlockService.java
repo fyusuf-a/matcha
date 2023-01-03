@@ -2,7 +2,7 @@ package ft.app.matcha.domain.block;
 
 import java.time.LocalDateTime;
 
-import ft.app.matcha.domain.block.event.BlockEvent;
+import ft.app.matcha.domain.block.event.BlockedEvent;
 import ft.app.matcha.domain.block.exception.CannotBlockYourselfException;
 import ft.app.matcha.domain.block.model.BlockStatus;
 import ft.app.matcha.domain.report.event.ReportedEvent;
@@ -46,7 +46,7 @@ public class BlockService {
 				.setCreatedAt(LocalDateTime.now())
 		);
 		
-		eventPublisher.publishEvent(new BlockEvent(this, block));
+		eventPublisher.publishEvent(new BlockedEvent(this, block));
 		
 		return block;
 	}

@@ -7,8 +7,8 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import ft.app.matcha.domain.auth.event.RegisterEvent;
 import ft.app.matcha.domain.block.BlockService;
-import ft.app.matcha.domain.like.event.LikeEvent;
-import ft.app.matcha.domain.like.event.UnlikeEvent;
+import ft.app.matcha.domain.like.event.LikedEvent;
+import ft.app.matcha.domain.like.event.UnlikedEvent;
 import ft.app.matcha.domain.message.event.MessageCreatedEvent;
 import ft.app.matcha.domain.notification.event.NotificationCreatedEvent;
 import ft.app.matcha.domain.notification.model.NotificationPatchForm;
@@ -76,7 +76,7 @@ public class NotificationService {
 	
 	/* The user received a "like". */
 	@EventListener
-	public void onLike(LikeEvent event) {
+	public void onLike(LikedEvent event) {
 		if (event.isCross()) {
 			return;
 		}
@@ -115,7 +115,7 @@ public class NotificationService {
 	
 	/* A "liked" user "liked" back. */
 	@EventListener
-	public void onLikeBack(LikeEvent event) {
+	public void onLikeBack(LikedEvent event) {
 		if (!event.isCross()) {
 			return;
 		}
@@ -131,7 +131,7 @@ public class NotificationService {
 	
 	/* A connected user "unliked" you. */
 	@EventListener
-	public void onUnliked(UnlikeEvent event) {
+	public void onUnliked(UnlikedEvent event) {
 		final var user = event.getUser();
 		final var peer = event.getPeer();
 		

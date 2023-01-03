@@ -156,7 +156,7 @@ public class Matcha {
 			
 			final var emailSender = new EmailSender(emailConfiguration);
 			
-			final var userService = new UserService(userRepository);
+			final var userService = new UserService(userRepository, matchaConfiguration);
 			final var jwtService = new JwtService(userRepository, authConfiguration);
 			final var tokenService = new TokenService(tokenRepository, authConfiguration, eventPublisher);
 			final var authService = new AuthService(tokenService, userService, jwtService, emailSender, eventPublisher);

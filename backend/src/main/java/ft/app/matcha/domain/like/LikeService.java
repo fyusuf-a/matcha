@@ -3,9 +3,9 @@ package ft.app.matcha.domain.like;
 import java.time.LocalDateTime;
 
 import ft.app.matcha.domain.block.BlockService;
-import ft.app.matcha.domain.block.event.BlockEvent;
-import ft.app.matcha.domain.like.event.LikeEvent;
-import ft.app.matcha.domain.like.event.UnlikeEvent;
+import ft.app.matcha.domain.block.event.BlockedEvent;
+import ft.app.matcha.domain.like.event.LikedEvent;
+import ft.app.matcha.domain.like.event.UnlikedEvent;
 import ft.app.matcha.domain.like.exception.CannotLikeBlockedUserException;
 import ft.app.matcha.domain.like.exception.CannotLikeYourselfException;
 import ft.app.matcha.domain.like.model.LikeStatus;
@@ -56,7 +56,7 @@ public class LikeService {
 		
 		final var cross = repository.existsByUserAndPeer(peer, user);
 		
-		eventPublisher.publishEvent(new LikeEvent(this, like, cross));
+		eventPublisher.publishEvent(new LikedEvent(this, like, cross));
 		
 		return like;
 	}
@@ -65,14 +65,14 @@ public class LikeService {
 		final var unliked = repository.deleteByUserAndPeer(user, peer) != 0;
 		
 		if (unliked) {
-			eventPublisher.publishEvent(new UnlikeEvent(this, user, peer));
+			eventPublisher.publishEvent(new UnlikedEvent(this, user, peer));
 		}
 		
 		return unliked;
 	}
 	
 	@EventListener
-	public void onBlock(BlockEvent event) {
+	public void onBlock(BlockedEvent event) {
 		final var block = event.getBlock();
 		
 		repository.deleteByUserAndPeer(block.getUser(), block.getPeer());

@@ -6,12 +6,12 @@ import lombok.Getter;
 
 @SuppressWarnings("serial")
 @Getter
-public class LikeEvent extends ApplicationEvent {
+public class LikedEvent extends ApplicationEvent {
 	
 	private final Like like;
 	private final boolean cross;
 	
-	public LikeEvent(Object source, Like like, boolean cross) {
+	public LikedEvent(Object source, Like like, boolean cross) {
 		super(source);
 		
 		this.like = like;
