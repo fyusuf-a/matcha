@@ -16,6 +16,7 @@
           </v-card-text>
           <v-card-actions>
             <like-button :peer="user" />
+            <report-button :user="user" />
             <v-btn color="primary" :to="`/users/${user.id}/likes`">
               who liked?
             </v-btn>
