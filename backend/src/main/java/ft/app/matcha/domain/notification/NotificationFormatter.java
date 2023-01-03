@@ -16,14 +16,23 @@ public class NotificationFormatter {
 			toUserLink(user)
 		);
 	}
-
+	
+	public static Pair<String, String> formatLikedBack(Like like) {
+		final var user = like.getUser();
+		
+		return Pair.of(
+			"%s liked you back!".formatted(user.getFirstName()),
+			toUserLink(user)
+		);
+	}
+	
 	public static Pair<String, String> formatUnliked(User user) {
 		return Pair.of(
 			"%s unliked you!".formatted(user.getFirstName()),
 			toUserLink(user)
 		);
 	}
-
+	
 	public static Pair<String, String> formatMessageReceived(Message message) {
 		final var user = message.getUser();
 		
@@ -32,7 +41,7 @@ public class NotificationFormatter {
 			"%s/messages".formatted(toUserLink(user))
 		);
 	}
-
+	
 	public static Pair<String, String> formatProfileChecked(User viewer) {
 		return Pair.of(
 			"%s viewed your profile!".formatted(viewer.getFirstName()),

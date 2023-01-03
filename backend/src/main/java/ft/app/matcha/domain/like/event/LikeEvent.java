@@ -9,11 +9,13 @@ import lombok.Getter;
 public class LikeEvent extends ApplicationEvent {
 	
 	private final Like like;
+	private final boolean cross;
 	
-	public LikeEvent(Object source, Like like) {
+	public LikeEvent(Object source, Like like, boolean cross) {
 		super(source);
 		
 		this.like = like;
+		this.cross = cross;
 	}
 	
 }

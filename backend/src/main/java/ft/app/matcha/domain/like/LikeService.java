@@ -45,7 +45,9 @@ public class LikeService {
 				.setCreatedAt(LocalDateTime.now())
 		);
 		
-		eventPublisher.publishEvent(new LikeEvent(this, like));
+		final var cross = repository.existsByUserAndPeer(peer, user);
+		
+		eventPublisher.publishEvent(new LikeEvent(this, like, cross));
 		
 		return like;
 	}

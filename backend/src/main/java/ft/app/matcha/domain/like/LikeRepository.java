@@ -19,6 +19,10 @@ public class LikeRepository extends Repository<Like, Long> {
 		return findBy(createByUserAndPeerPredicate(user, peer));
 	}
 	
+	public boolean existsByUserAndPeer(User user, User peer) {
+		return existsBy(createByUserAndPeerPredicate(user, peer));
+	}
+	
 	public long deleteByUserAndPeer(User user, User peer) {
 		return deleteAllBy(createByUserAndPeerPredicate(user, peer));
 	}

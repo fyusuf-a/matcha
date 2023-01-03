@@ -75,6 +75,10 @@ public class NotificationService {
 	/* The user received a "like". */
 	@EventListener
 	public void onLike(LikeEvent event) {
+		if (event.isCross()) {
+			return;
+		}
+		
 		final var like = event.getLike();
 		final var peer = like.getPeer();
 		
@@ -100,7 +104,17 @@ public class NotificationService {
 	}
 	
 	/* A "liked" user "liked" back. */
-	// TODO
+	@EventListener
+	public void onLikeBack(LikeEvent event) {
+		if (!event.isCross()) {
+			return;
+		}
+		
+		final var like = event.getLike();
+		final var peer = like.getPeer();
+		
+		create(peer, Notification.Type.LIKED_BACK, NotificationFormatter.formatLikedBack(like));
+	}
 	
 	/* A connected user "unliked" you. */
 	@EventListener
