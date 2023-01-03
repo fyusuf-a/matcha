@@ -23,7 +23,8 @@ import lombok.experimental.FieldNameConstants;
 
 @Entity
 @Table(indexes = {
-	@Index(columnList = Token.Fields.type)
+	@Index(columnList = Token.Fields.type),
+	@Index(columnList = Token.Fields.encoded),
 }, uniqueConstraints = {
 	@UniqueConstraint(columnNames = {
 		Token.Fields.type,
