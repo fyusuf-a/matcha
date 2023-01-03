@@ -14,13 +14,12 @@ import ft.app.matcha.configuration.MatchaConfigurationProperties;
 import ft.app.matcha.domain.auth.AuthController;
 import ft.app.matcha.domain.auth.AuthService;
 import ft.app.matcha.domain.auth.EmailSender;
-import ft.app.matcha.domain.auth.EmailToken;
-import ft.app.matcha.domain.auth.EmailTokenRepository;
 import ft.app.matcha.domain.auth.EmailTokenService;
 import ft.app.matcha.domain.auth.JwtService;
-import ft.app.matcha.domain.auth.RefreshToken;
-import ft.app.matcha.domain.auth.RefreshTokenRepository;
 import ft.app.matcha.domain.auth.RefreshTokenService;
+import ft.app.matcha.domain.auth.Token;
+import ft.app.matcha.domain.auth.TokenRepository;
+import ft.app.matcha.domain.auth.TokenService;
 import ft.app.matcha.domain.block.Block;
 import ft.app.matcha.domain.block.BlockController;
 import ft.app.matcha.domain.block.BlockRepository;
@@ -130,10 +129,9 @@ public class Matcha {
 			
 			final var ormConfiguration = configureOrm(databaseConfiguration, new Class<?>[] {
 				User.class,
-				RefreshToken.class,
 				Notification.class,
 				Like.class,
-				EmailToken.class,
+				Token.class,
 				Picture.class,
 				Tag.class,
 				UserTag.class,
@@ -148,9 +146,8 @@ public class Matcha {
 			final var taskScheduler = new WispTaskScheduler();
 			
 			final var userRepository = new UserRepository(ormConfiguration.getEntityManager());
-			final var refreshTokenRepository = new RefreshTokenRepository(ormConfiguration.getEntityManager());
 			final var notificationRepository = new NotificationRepository(ormConfiguration.getEntityManager());
-			final var emailTokenRepository = new EmailTokenRepository(ormConfiguration.getEntityManager());
+			final var tokenRepository = new TokenRepository(ormConfiguration.getEntityManager());
 			final var pictureRepository = new PictureRepository(ormConfiguration.getEntityManager());
 			final var likeRepository = new LikeRepository(ormConfiguration.getEntityManager());
 			final var tagRepository = new TagRepository(ormConfiguration.getEntityManager());
@@ -163,8 +160,9 @@ public class Matcha {
 			
 			final var userService = new UserService(userRepository);
 			final var jwtService = new JwtService(userRepository, authConfiguration);
-			final var refreshTokenService = new RefreshTokenService(refreshTokenRepository, authConfiguration);
-			final var emailTokenService = new EmailTokenService(emailTokenRepository, authConfiguration, emailSender, eventPublisher);
+			final var tokenService = new TokenService(tokenRepository, authConfiguration, eventPublisher);
+			final var refreshTokenService = new RefreshTokenService(tokenService);
+			final var emailTokenService = new EmailTokenService(tokenService, emailSender);
 			final var authService = new AuthService(userService, refreshTokenService, emailTokenService, jwtService, eventPublisher);
 			final var notificationService = new NotificationService(notificationRepository, eventPublisher);
 			final var pictureService = new PictureService(pictureRepository, matchaConfiguration);

@@ -52,16 +52,18 @@ public class EmailSender {
 		this.freemarkerConfiguration.setFallbackOnNullLoopVariable(false);
 	}
 	
-	public boolean sendConfirmationEmail(EmailToken emailToken) {
-		final var user = emailToken.getUser();
-		final var plain = Objects.requireNonNull(emailToken.getPlain(), "emailToken.plain is null");
+	public boolean sendConfirmationEmail(Token token) {
+		token.assertType(Token.Type.EMAIL);
+		
+		final var user = token.getUser();
+		final var plain = Objects.requireNonNull(token.getPlain(), "emailToken.plain is null");
 		
 		final var confirmUrl = "http://localhost:3000/auth/confirm?token=%s".formatted(plain);
 		
 		final var properties = Map.of(
 			"confirmUrl", confirmUrl,
 			"firstName", user.getFirstName(),
-			"expireAt", emailToken.getExpireAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL))
+			"expireAt", token.getExpireAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL))
 		);
 		
 		return sendEmail("confirm", user.getEmail(), properties);

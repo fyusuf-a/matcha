@@ -82,10 +82,11 @@ public class AuthService {
 		return createTokens(refreshTokenService.create(user));
 	}
 	
-	public Tokens createTokens(RefreshToken refreshToken) {
-		final var accessToken = jwtService.generate(refreshToken.getUser());
+	public Tokens createTokens(Token token) {
+		token.assertType(Token.Type.REFRESH);
 		
-		return new Tokens(accessToken, refreshToken.getPlain());
+		final var accessToken = jwtService.generate(token.getUser());
+		return new Tokens(accessToken, token.getPlain());
 	}
 	
 	public static String encode(String password) {

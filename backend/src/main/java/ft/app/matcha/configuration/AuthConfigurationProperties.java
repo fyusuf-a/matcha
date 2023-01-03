@@ -21,5 +21,8 @@ public class AuthConfigurationProperties {
 
 	private int emailTokenLength = 128;
 	private Duration emailTokenExpiration = Duration.ofDays(1);
+
+	private int passwordTokenLength = 128;
+	private Duration passwordTokenExpiration = Duration.ofHours(1);
 	
 }
