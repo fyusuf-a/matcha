@@ -37,6 +37,10 @@ import ft.app.matcha.domain.picture.Picture;
 import ft.app.matcha.domain.picture.PictureController;
 import ft.app.matcha.domain.picture.PictureRepository;
 import ft.app.matcha.domain.picture.PictureService;
+import ft.app.matcha.domain.report.Report;
+import ft.app.matcha.domain.report.ReportController;
+import ft.app.matcha.domain.report.ReportRepository;
+import ft.app.matcha.domain.report.ReportService;
 import ft.app.matcha.domain.socket.WebSocketService;
 import ft.app.matcha.domain.tag.Tag;
 import ft.app.matcha.domain.tag.TagController;
@@ -130,6 +134,7 @@ public class Matcha {
 				Tag.class,
 				UserTag.class,
 				Message.class,
+				Report.class,
 			});
 			
 			final var webSocket = WebSocketHandler.create(objectMapper);
@@ -146,6 +151,7 @@ public class Matcha {
 			final var tagRepository = new TagRepository(ormConfiguration.getEntityManager());
 			final var userTagRepository = new UserTagRepository(ormConfiguration.getEntityManager());
 			final var messageRepository = new MessageRepository(ormConfiguration.getEntityManager());
+			final var reportRepository = new ReportRepository(ormConfiguration.getEntityManager());
 			
 			final var emailSender = new EmailSender(emailConfiguration);
 			
@@ -162,6 +168,7 @@ public class Matcha {
 			final var messageService = new MessageService(messageRepository, eventPublisher);
 			final var jwtAuthenticator = new JwtAuthenticator(jwtService);
 			final var webSocketService = new WebSocketService(webSocket, jwtAuthenticator);
+			final var reportService = new ReportService(reportRepository, eventPublisher);
 			
 			final var services = Arrays.asList(new Object[] {
 				userService,
@@ -176,6 +183,7 @@ public class Matcha {
 				userTagService,
 				messageService,
 				webSocketService,
+				reportService,
 			});
 			
 			final var eventListenerFactory = new EventListenerFactory(eventPublisher);
@@ -195,6 +203,7 @@ public class Matcha {
 			routeRegistry.add(new UserTagController(userTagService, userService, tagService));
 			routeRegistry.add(new MessageController(messageService, userService));
 			routeRegistry.add(new NotificationController(notificationService));
+			routeRegistry.add(new ReportController(reportService, userService));
 			
 			final var swagger = new OpenAPI()
 				.schemaRequirement("JWT", new SecurityScheme()
