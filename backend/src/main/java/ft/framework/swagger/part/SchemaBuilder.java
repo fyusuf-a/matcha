@@ -133,8 +133,20 @@ public class SchemaBuilder {
 		return new Schema<>().$ref(name);
 	}
 	
+	public static String getAllEnclosing(Class<?> clazz) {
+		final var enclosing = clazz.getEnclosingClass();
+		
+		if (enclosing == null) {
+			return "";
+		}
+		
+		return getAllEnclosing(enclosing) + enclosing.getSimpleName();
+	}
+	
 	public static String getName(JavaType type) {
 		final var builder = new StringBuilder();
+		
+		builder.append(getAllEnclosing(type.getRawClass()));
 		
 		for (int index = 0; index < type.containedTypeCount(); ++index) {
 			final var contained = type.containedType(index);
