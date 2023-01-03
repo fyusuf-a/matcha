@@ -21,6 +21,10 @@ import ft.app.matcha.domain.auth.JwtService;
 import ft.app.matcha.domain.auth.RefreshToken;
 import ft.app.matcha.domain.auth.RefreshTokenRepository;
 import ft.app.matcha.domain.auth.RefreshTokenService;
+import ft.app.matcha.domain.block.Block;
+import ft.app.matcha.domain.block.BlockController;
+import ft.app.matcha.domain.block.BlockRepository;
+import ft.app.matcha.domain.block.BlockService;
 import ft.app.matcha.domain.like.Like;
 import ft.app.matcha.domain.like.LikeController;
 import ft.app.matcha.domain.like.LikeRepository;
@@ -135,6 +139,7 @@ public class Matcha {
 				UserTag.class,
 				Message.class,
 				Report.class,
+				Block.class,
 			});
 			
 			final var webSocket = WebSocketHandler.create(objectMapper);
@@ -152,6 +157,7 @@ public class Matcha {
 			final var userTagRepository = new UserTagRepository(ormConfiguration.getEntityManager());
 			final var messageRepository = new MessageRepository(ormConfiguration.getEntityManager());
 			final var reportRepository = new ReportRepository(ormConfiguration.getEntityManager());
+			final var blockRepository = new BlockRepository(ormConfiguration.getEntityManager());
 			
 			final var emailSender = new EmailSender(emailConfiguration);
 			
@@ -162,7 +168,8 @@ public class Matcha {
 			final var authService = new AuthService(userService, refreshTokenService, emailTokenService, jwtService, eventPublisher);
 			final var notificationService = new NotificationService(notificationRepository, eventPublisher);
 			final var pictureService = new PictureService(pictureRepository, matchaConfiguration);
-			final var likeService = new LikeService(likeRepository, eventPublisher);
+			final var blockService = new BlockService(blockRepository, eventPublisher);
+			final var likeService = new LikeService(likeRepository, eventPublisher, blockService);
 			final var tagService = new TagService(tagRepository);
 			final var userTagService = new UserTagService(userTagRepository, matchaConfiguration);
 			final var messageService = new MessageService(messageRepository, eventPublisher);
@@ -184,6 +191,7 @@ public class Matcha {
 				messageService,
 				webSocketService,
 				reportService,
+				blockService,
 			});
 			
 			final var eventListenerFactory = new EventListenerFactory(eventPublisher);
@@ -204,6 +212,7 @@ public class Matcha {
 			routeRegistry.add(new MessageController(messageService, userService));
 			routeRegistry.add(new NotificationController(notificationService));
 			routeRegistry.add(new ReportController(reportService, userService));
+			routeRegistry.add(new BlockController(blockService, userService));
 			
 			final var swagger = new OpenAPI()
 				.schemaRequirement("JWT", new SecurityScheme()

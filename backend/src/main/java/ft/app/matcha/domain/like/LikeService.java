@@ -2,12 +2,16 @@ package ft.app.matcha.domain.like;
 
 import java.time.LocalDateTime;
 
+import ft.app.matcha.domain.block.BlockService;
+import ft.app.matcha.domain.block.event.BlockEvent;
 import ft.app.matcha.domain.like.event.LikeEvent;
 import ft.app.matcha.domain.like.event.UnlikeEvent;
+import ft.app.matcha.domain.like.exception.CannotLikeBlockedUserException;
 import ft.app.matcha.domain.like.exception.CannotLikeYourselfException;
 import ft.app.matcha.domain.like.model.LikeStatus;
 import ft.app.matcha.domain.user.User;
 import ft.framework.event.ApplicationEventPublisher;
+import ft.framework.event.annotation.EventListener;
 import ft.framework.mvc.domain.Page;
 import ft.framework.mvc.domain.Pageable;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +21,7 @@ public class LikeService {
 	
 	private final LikeRepository repository;
 	private final ApplicationEventPublisher eventPublisher;
+	private final BlockService blockService;
 	
 	public Page<Like> findAllWhoLiked(User user, Pageable pageable) {
 		return repository.findAllByPeer(user, pageable);
@@ -31,6 +36,10 @@ public class LikeService {
 	public Like like(User user, User peer) {
 		if (user.getId() == peer.getId()) {
 			throw new CannotLikeYourselfException();
+		}
+		
+		if (blockService.getStatus(user, peer).isBlocked()) {
+			throw new CannotLikeBlockedUserException();
 		}
 		
 		final var optional = repository.findByUserAndPeer(user, peer);
@@ -60,6 +69,13 @@ public class LikeService {
 		}
 		
 		return unliked;
+	}
+	
+	@EventListener
+	public void onBlock(BlockEvent event) {
+		final var block = event.getBlock();
+		
+		repository.deleteByUserAndPeer(block.getUser(), block.getPeer());
 	}
 	
 }

@@ -2,6 +2,8 @@ package ft.app.matcha.domain.like.model;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import ft.app.matcha.domain.like.Like;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,6 +15,7 @@ import lombok.NoArgsConstructor;
 public class LikeStatus {
 	
 	private boolean liked;
+	@JsonFormat(shape = JsonFormat.Shape.STRING)
 	private LocalDateTime likedAt;
 	
 	public static LikeStatus from(Like like) {
