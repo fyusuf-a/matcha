@@ -2,14 +2,12 @@ package ft.app.matcha.domain.auth;
 
 import java.time.LocalDateTime;
 
-import ft.app.matcha.domain.auth.event.LoginEvent;
-import ft.app.matcha.domain.auth.event.LogoutEvent;
-import ft.app.matcha.domain.auth.event.RefreshEvent;
 import ft.app.matcha.domain.auth.event.RegisterEvent;
-import ft.app.matcha.domain.auth.exception.InvalidConfirmTokenException;
-import ft.app.matcha.domain.auth.exception.InvalidRefreshTokenException;
+import ft.app.matcha.domain.auth.exception.InvalidTokenException;
 import ft.app.matcha.domain.auth.exception.WrongLoginOrPasswordException;
+import ft.app.matcha.domain.auth.model.ChangePasswordForm;
 import ft.app.matcha.domain.auth.model.ConfirmForm;
+import ft.app.matcha.domain.auth.model.ForgotForm;
 import ft.app.matcha.domain.auth.model.LoginForm;
 import ft.app.matcha.domain.auth.model.LogoutForm;
 import ft.app.matcha.domain.auth.model.RefreshForm;
@@ -23,20 +21,18 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthService {
 	
+	private final TokenService tokenService;
 	private final UserService userService;
-	private final RefreshTokenService refreshTokenService;
-	private final EmailTokenService emailTokenService;
 	private final JwtService jwtService;
+	private final EmailSender emailSender;
 	private final ApplicationEventPublisher eventPublisher;
 	
 	public Tokens login(LoginForm form) {
 		final var password = encode(form.getPassword());
-		final var user = userService.find(form.getLogin(), password)
+		
+		return userService.find(form.getLogin(), password)
+			.map(this::createTokens)
 			.orElseThrow(WrongLoginOrPasswordException::new);
-		
-		eventPublisher.publishEvent(new LoginEvent(this, user));
-		
-		return createTokens(user);
 	}
 	
 	public Tokens register(RegisterForm form) {
@@ -45,47 +41,51 @@ public class AuthService {
 		
 		eventPublisher.publishEvent(new RegisterEvent(this, user));
 		
+		final var token = tokenService.create(Token.Type.EMAIL, user);
+		emailSender.sendConfirmationEmail(token);
+		
 		return createTokens(user);
 	}
 	
 	public Tokens refresh(RefreshForm form) {
-		final var refreshToken = refreshTokenService.refresh(form.getRefreshToken())
-			.orElseThrow(InvalidRefreshTokenException::new);
-		
-		eventPublisher.publishEvent(new RefreshEvent(this, refreshToken));
-		
-		return createTokens(refreshToken);
+		return tokenService.validate(Token.Type.REFRESH, form.getRefreshToken())
+			.map(this::createTokens)
+			.orElseThrow(() -> new InvalidTokenException(Token.Type.REFRESH));
 	}
 	
 	public void logout(LogoutForm form) {
-		final var refreshToken = refreshTokenService.find(form.getRefreshToken())
-			.orElseThrow(InvalidRefreshTokenException::new);
-		
-		eventPublisher.publishEvent(new LogoutEvent(this, refreshToken));
-		
-		refreshTokenService.delete(refreshToken);
+		tokenService.validate(Token.Type.REFRESH, form.getRefreshToken())
+			.orElseThrow(() -> new InvalidTokenException(Token.Type.REFRESH));
 	}
 	
-	public Tokens confirm(ConfirmForm form) {
-		final var user = emailTokenService.validate(form.getToken())
-			.orElseThrow(InvalidConfirmTokenException::new);
+	public void confirm(ConfirmForm form) {
+		final var user = tokenService.validate(Token.Type.EMAIL, form.getToken())
+			.orElseThrow(() -> new InvalidTokenException(Token.Type.EMAIL));
 		
 		userService.save(user
 			.setEmailConfirmed(true)
 			.setEmailConfirmedAt(LocalDateTime.now())
 		);
-		
-		return createTokens(user);
 	}
 	
-	public Tokens createTokens(User user) {
-		return createTokens(refreshTokenService.create(user));
+	public void forgot(ForgotForm form) {
+		userService.find(form.getEmail())
+			.map((user) -> tokenService.create(Token.Type.PASSWORD, user))
+			.ifPresent(emailSender::sendPasswordResetEmail);
 	}
 	
-	public Tokens createTokens(Token token) {
-		token.assertType(Token.Type.REFRESH);
+	public void changePassword(ChangePasswordForm form) {
+		final var user = tokenService.validate(Token.Type.PASSWORD, form.getToken())
+			.orElseThrow(() -> new InvalidTokenException(Token.Type.PASSWORD));
 		
+		final var password = encode(form.getPassword());
+		userService.save(user.setPassword(password));
+	}
+	
+	private Tokens createTokens(User user) {
+		final var token = tokenService.create(Token.Type.REFRESH, user);
 		final var accessToken = jwtService.generate(token.getUser());
+		
 		return new Tokens(accessToken, token.getPlain());
 	}
 	

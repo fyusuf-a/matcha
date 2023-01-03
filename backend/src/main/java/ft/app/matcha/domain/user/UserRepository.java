@@ -22,6 +22,12 @@ public class UserRepository extends Repository<User, Long> {
 		);
 	}
 	
+	public Optional<User> findByEmail(String email) {
+		return findBy(
+			builder.equals(User.Fields.email, email)
+		);
+	}
+	
 	public Optional<User> findByLoginAndPassword(String login, String password) {
 		return findBy(
 			builder.and(
@@ -30,7 +36,7 @@ public class UserRepository extends Repository<User, Long> {
 			)
 		);
 	}
-
+	
 	public List<User> findAllMen() {
 		return findAllBy(builder.equals(User.Fields.gender, Gender.MAN));
 	}

@@ -1,6 +1,8 @@
 package ft.app.matcha.domain.auth;
 
+import ft.app.matcha.domain.auth.model.ChangePasswordForm;
 import ft.app.matcha.domain.auth.model.ConfirmForm;
+import ft.app.matcha.domain.auth.model.ForgotForm;
 import ft.app.matcha.domain.auth.model.LoginForm;
 import ft.app.matcha.domain.auth.model.LogoutForm;
 import ft.app.matcha.domain.auth.model.RefreshForm;
@@ -61,10 +63,24 @@ public class AuthController {
 	}
 	
 	@PostMapping(path = "/confirm")
-	public Tokens confirm(
+	public void confirm(
 		@Body @Valid ConfirmForm form
 	) {
-		return authService.confirm(form);
+		authService.confirm(form);
+	}
+	
+	@PostMapping(path = "/forgot")
+	public void forgot(
+		@Body @Valid ForgotForm form
+	) {
+		authService.forgot(form);
+	}
+	
+	@PostMapping(path = "/change-password")
+	public void changePassword(
+		@Body @Valid ChangePasswordForm form
+	) {
+		authService.changePassword(form);
 	}
 	
 }

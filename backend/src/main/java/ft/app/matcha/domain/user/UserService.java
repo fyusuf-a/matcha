@@ -35,6 +35,10 @@ public class UserService {
 	public Optional<User> find(Long id) {
 		return repository.findById(id);
 	}
+
+	public Optional<User> find(String email) {
+		return repository.findByEmail(email);
+	}
 	
 	public Optional<User> find(String login, String password) {
 		return repository.findByLoginAndPassword(login, password);

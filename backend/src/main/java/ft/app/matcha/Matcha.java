@@ -14,9 +14,7 @@ import ft.app.matcha.configuration.MatchaConfigurationProperties;
 import ft.app.matcha.domain.auth.AuthController;
 import ft.app.matcha.domain.auth.AuthService;
 import ft.app.matcha.domain.auth.EmailSender;
-import ft.app.matcha.domain.auth.EmailTokenService;
 import ft.app.matcha.domain.auth.JwtService;
-import ft.app.matcha.domain.auth.RefreshTokenService;
 import ft.app.matcha.domain.auth.Token;
 import ft.app.matcha.domain.auth.TokenRepository;
 import ft.app.matcha.domain.auth.TokenService;
@@ -161,9 +159,7 @@ public class Matcha {
 			final var userService = new UserService(userRepository);
 			final var jwtService = new JwtService(userRepository, authConfiguration);
 			final var tokenService = new TokenService(tokenRepository, authConfiguration, eventPublisher);
-			final var refreshTokenService = new RefreshTokenService(tokenService);
-			final var emailTokenService = new EmailTokenService(tokenService, emailSender);
-			final var authService = new AuthService(userService, refreshTokenService, emailTokenService, jwtService, eventPublisher);
+			final var authService = new AuthService(tokenService, userService, jwtService, emailSender, eventPublisher);
 			final var notificationService = new NotificationService(notificationRepository, eventPublisher);
 			final var pictureService = new PictureService(pictureRepository, matchaConfiguration);
 			final var blockService = new BlockService(blockRepository, eventPublisher);
@@ -178,10 +174,8 @@ public class Matcha {
 			final var services = Arrays.asList(new Object[] {
 				userService,
 				jwtService,
-				refreshTokenService,
 				authService,
 				notificationService,
-				emailTokenService,
 				pictureService,
 				likeService,
 				tagService,

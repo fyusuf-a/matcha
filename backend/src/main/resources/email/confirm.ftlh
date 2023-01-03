@@ -4,7 +4,7 @@
 </head>
 <body>
   <h1>Welcome ${firstName}!</h1>
-  <p>Please confirm your email by <a href="${confirmUrl}">clicking on this link</a>!</p>
+  <p>Please confirm your email by <a href="${url}">clicking on this link</a>!</p>
   <small>This link expire at ${expireAt}</small>
 </body>
 </html>

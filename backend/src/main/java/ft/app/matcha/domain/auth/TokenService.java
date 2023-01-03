@@ -56,6 +56,20 @@ public class TokenService {
 		return repository.findByTypeAndEncoded(type, encoded);
 	}
 	
+	public Optional<User> validate(Token.Type type, String plain) {
+		final var token = find(type, plain);
+		
+		if (token.isEmpty()) {
+			return Optional.empty();
+		}
+		
+		final var user = token.get().getUser();
+		
+		validate(token.get());
+		
+		return Optional.of(user);
+	}
+	
 	public void validate(Token token) {
 		eventPublisher.publishEvent(new TokenValidatedEvent(this, token));
 		repository.delete(token);

@@ -1,6 +1,7 @@
 package ft.app.matcha.domain.auth;
 
 import java.io.StringWriter;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -56,17 +57,34 @@ public class EmailSender {
 		token.assertType(Token.Type.EMAIL);
 		
 		final var user = token.getUser();
-		final var plain = Objects.requireNonNull(token.getPlain(), "emailToken.plain is null");
+		final var plain = getPlain(token);
 		
-		final var confirmUrl = "http://localhost:3000/auth/confirm?token=%s".formatted(plain);
+		final var url = "http://localhost:3000/auth/confirm?token=%s".formatted(plain);
 		
 		final var properties = Map.of(
-			"confirmUrl", confirmUrl,
+			"url", url,
 			"firstName", user.getFirstName(),
-			"expireAt", token.getExpireAt().atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL))
+			"expireAt", formatDate(token.getExpireAt())
 		);
 		
 		return sendEmail("confirm", user.getEmail(), properties);
+	}
+	
+	public boolean sendPasswordResetEmail(Token token) {
+		token.assertType(Token.Type.PASSWORD);
+		
+		final var user = token.getUser();
+		final var plain = getPlain(token);
+		
+		final var url = "http://localhost:3000/auth/change-password?token=%s".formatted(plain);
+		
+		final var properties = Map.of(
+			"url", url,
+			"firstName", user.getFirstName(),
+			"expireAt", formatDate(token.getExpireAt())
+		);
+		
+		return sendEmail("forgot", user.getEmail(), properties);
 	}
 	
 	public boolean sendEmail(String templateName, String email, Map<?, ?> properties) {
@@ -129,6 +147,14 @@ public class EmailSender {
 		}
 		
 		return Session.getInstance(properties, null);
+	}
+	
+	public static String getPlain(Token token) {
+		return Objects.requireNonNull(token.getPlain(), "token.plain is null");
+	}
+	
+	public static String formatDate(LocalDateTime dateTime) {
+		return dateTime.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL));
 	}
 	
 	public static Optional<String> extractSubject(String html) {
