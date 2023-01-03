@@ -33,13 +33,17 @@ public class LikeService {
 			throw new CannotLikeYourselfException();
 		}
 		
-		final var like = repository.findByUserAndPeer(user, peer)
-			.orElseGet(() -> repository.save(
-				new Like()
-					.setUser(user)
-					.setPeer(peer)
-					.setCreatedAt(LocalDateTime.now())
-			));
+		final var optional = repository.findByUserAndPeer(user, peer);
+		if (optional.isPresent()) {
+			return optional.get();
+		}
+		
+		final var like = repository.save(
+			new Like()
+				.setUser(user)
+				.setPeer(peer)
+				.setCreatedAt(LocalDateTime.now())
+		);
 		
 		eventPublisher.publishEvent(new LikeEvent(this, like));
 		
