@@ -23,6 +23,10 @@ public class BlockRepository extends Repository<Block, Long> {
 		return deleteAllBy(createByUserAndPeerPredicate(user, peer));
 	}
 	
+	public boolean existsByUserAndPeer(User user, User peer) {
+		return existsBy(createByUserAndPeerPredicate(user, peer));
+	}
+	
 	public Page<Block> findAllByUser(User user, Pageable pageable) {
 		return findAllBy(builder.and(
 			builder.equals(Block.Fields.user, user)

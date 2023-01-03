@@ -160,7 +160,6 @@ public class Matcha {
 			final var jwtService = new JwtService(userRepository, authConfiguration);
 			final var tokenService = new TokenService(tokenRepository, authConfiguration, eventPublisher);
 			final var authService = new AuthService(tokenService, userService, jwtService, emailSender, eventPublisher);
-			final var notificationService = new NotificationService(notificationRepository, eventPublisher);
 			final var pictureService = new PictureService(pictureRepository, matchaConfiguration);
 			final var blockService = new BlockService(blockRepository, eventPublisher);
 			final var likeService = new LikeService(likeRepository, eventPublisher, blockService);
@@ -170,6 +169,7 @@ public class Matcha {
 			final var jwtAuthenticator = new JwtAuthenticator(jwtService);
 			final var webSocketService = new WebSocketService(webSocket, jwtAuthenticator);
 			final var reportService = new ReportService(reportRepository, eventPublisher);
+			final var notificationService = new NotificationService(notificationRepository, blockService, eventPublisher);
 			
 			final var services = Arrays.asList(new Object[] {
 				userService,

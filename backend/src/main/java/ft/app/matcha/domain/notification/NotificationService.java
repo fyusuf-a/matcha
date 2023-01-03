@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.apache.commons.lang3.tuple.Pair;
 
 import ft.app.matcha.domain.auth.event.RegisterEvent;
+import ft.app.matcha.domain.block.BlockService;
 import ft.app.matcha.domain.like.event.LikeEvent;
 import ft.app.matcha.domain.like.event.UnlikeEvent;
 import ft.app.matcha.domain.message.event.MessageCreatedEvent;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class NotificationService {
 	
 	private final NotificationRepository repository;
+	private final BlockService blockService;
 	private final ApplicationEventPublisher eventPublisher;
 	
 	public Optional<Notification> find(long id) {
@@ -80,9 +82,12 @@ public class NotificationService {
 		}
 		
 		final var like = event.getLike();
+		final var user = like.getUser();
 		final var peer = like.getPeer();
 		
-		create(peer, Notification.Type.LIKED, NotificationFormatter.formatLiked(like));
+		if (canCreate(peer, user)) {
+			create(peer, Notification.Type.LIKED, NotificationFormatter.formatLiked(like));
+		}
 	}
 	
 	/* The user's profile has been checked. */
@@ -91,16 +96,21 @@ public class NotificationService {
 		final var user = event.getUser();
 		final var viewer = event.getViewer();
 		
-		create(user, Notification.Type.PROFILE_CHECKED, NotificationFormatter.formatProfileChecked(viewer));
+		if (canCreate(user, viewer)) {
+			create(user, Notification.Type.PROFILE_CHECKED, NotificationFormatter.formatProfileChecked(viewer));
+		}
 	}
 	
 	/* The user received a message. */
 	@EventListener
 	public void onMessageCreated(MessageCreatedEvent event) {
 		final var message = event.getMessage();
+		final var user = message.getUser();
 		final var peer = message.getPeer();
 		
-		create(peer, Notification.Type.MESSAGE_RECEIVED, NotificationFormatter.formatMessageReceived(message));
+		if (canCreate(peer, user)) {
+			create(peer, Notification.Type.MESSAGE_RECEIVED, NotificationFormatter.formatMessageReceived(message));
+		}
 	}
 	
 	/* A "liked" user "liked" back. */
@@ -111,9 +121,12 @@ public class NotificationService {
 		}
 		
 		final var like = event.getLike();
+		final var user = like.getUser();
 		final var peer = like.getPeer();
 		
-		create(peer, Notification.Type.LIKED_BACK, NotificationFormatter.formatLikedBack(like));
+		if (canCreate(peer, user)) {
+			create(peer, Notification.Type.LIKED_BACK, NotificationFormatter.formatLikedBack(like));
+		}
 	}
 	
 	/* A connected user "unliked" you. */
@@ -122,7 +135,13 @@ public class NotificationService {
 		final var user = event.getUser();
 		final var peer = event.getPeer();
 		
-		create(peer, Notification.Type.UNLIKED, NotificationFormatter.formatUnliked(user));
+		if (canCreate(peer, user)) {
+			create(peer, Notification.Type.UNLIKED, NotificationFormatter.formatUnliked(user));
+		}
+	}
+	
+	public boolean canCreate(User user, User peer) {
+		return !blockService.isBlocked(user, peer);
 	}
 	
 }

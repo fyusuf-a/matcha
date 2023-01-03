@@ -53,4 +53,8 @@ public class BlockService {
 		return repository.deleteByUserAndPeer(user, peer) != 0;
 	}
 	
+	public boolean isBlocked(User user, User peer) {
+		return repository.existsByUserAndPeer(user, peer);
+	}
+	
 }
