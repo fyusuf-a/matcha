@@ -47,6 +47,8 @@ public interface Dialect {
 	String buildCountStatement(Table table);
 	
 	String buildCountStatement(Table table, Predicate<?> predicate);
+
+	Object buildExistsStatement(Table table, Predicate<?> predicate);
 	
 	String buildShowTableStatement();
 	

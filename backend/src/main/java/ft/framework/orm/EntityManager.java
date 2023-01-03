@@ -238,6 +238,25 @@ public class EntityManager {
 	}
 	
 	@SneakyThrows
+	public <T> boolean existsBy(Entity<T> entity, Predicate<T> predicate) {
+		final var table = entity.getTable();
+		
+		try (final var connection = dataSource.getPooledConnection().getConnection()) {
+			final var sql = dialect.buildExistsStatement(table, predicate);
+			
+			log.trace("existsBy: {}", sql);
+			
+			try (final var statement = connection.prepareStatement(sql.toString())) {
+				applyPredicate(statement, predicate);
+				
+				try (ResultSet resultSet = statement.executeQuery()) {
+					return resultSet.next();
+				}
+			}
+		}
+	}
+	
+	@SneakyThrows
 	public <T> Optional<T> findById(Entity<T> entity, Object id) {
 		final var table = entity.getTable();
 		final var columns = table.getColumns();

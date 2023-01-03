@@ -386,22 +386,9 @@ public class MySQLDialect implements Dialect {
 	
 	@Override
 	public String buildSelectStatement(Table table, Collection<Column> columns, Predicate<?> predicate, Pageable pageable) {
-		final var sql = buildSelectFrom(table, columns);
-		
-		if (predicate != null) {
-			sql.append(buildWhere(predicate));
-		}
-		
-		if (pageable != null) {
-			final var sort = pageable.getSort();
-			if (!sort.isEmpty()) {
-				sql.append(buildOrderBy(table, sort));
-			}
-			
-			sql.append(buildLimitAndOffset(pageable));
-		}
-		
-		return sql
+		return buildSelectFrom(table, columns)
+			.append(buildWhere(predicate))
+			.append(buildPageable(table, pageable))
 			.append(";")
 			.toString();
 	}
@@ -413,17 +400,22 @@ public class MySQLDialect implements Dialect {
 	
 	@Override
 	public String buildCountStatement(Table table, Predicate<?> predicate) {
-		final var sql = new StringBuilder();
-		
-		sql.append("SELECT ").append("COUNT(*)").append(" FROM `").append(table.getName()).append("`");
-		
-		if (predicate != null) {
-			sql.append(buildWhere(predicate));
-		}
-		
-		sql.append(";");
-		
-		return sql.toString();
+		return new StringBuilder()
+			.append("SELECT COUNT(*) FROM ")
+			.append(quote(table))
+			.append(buildWhere(predicate))
+			.append(";")
+			.toString();
+	}
+	
+	@Override
+	public Object buildExistsStatement(Table table, Predicate<?> predicate) {
+		return new StringBuilder()
+			.append("SELECT 1 FROM ")
+			.append(quote(table))
+			.append(buildWhere(predicate))
+			.append(";")
+			.toString();
 	}
 	
 	@Override
@@ -462,8 +454,23 @@ public class MySQLDialect implements Dialect {
 			.append(quote(table));
 	}
 	
+	public String buildPageable(Table table, Pageable pageable) {
+		return new StringBuilder()
+			.append(buildOrderBy(table, pageable != null ? pageable.getSort() : null))
+			.append(buildLimitAndOffset(pageable))
+			.toString();
+	}
+	
 	public String buildOrderBy(Table table, Sort sort) {
+		if (sort == null) {
+			return "";
+		}
+		
 		final var orders = sort.getOrders();
+		if (orders.isEmpty()) {
+			return "";
+		}
+		
 		final var pairs = new ArrayList<Map.Entry<Column, Sort.Direction>>(orders.size());
 		
 		for (final var order : orders) {
@@ -498,6 +505,10 @@ public class MySQLDialect implements Dialect {
 	}
 	
 	public Object buildLimitAndOffset(Pageable pageable) {
+		if (pageable == null) {
+			return "";
+		}
+		
 		final var limit = pageable.getSize();
 		final var offset = pageable.getPage() * limit;
 		
@@ -505,6 +516,10 @@ public class MySQLDialect implements Dialect {
 	}
 	
 	public String buildWhere(Predicate<?> predicate) {
+		if (predicate == null) {
+			return "";
+		}
+		
 		return " WHERE %s".formatted(buildPredicate(predicate));
 	}
 	

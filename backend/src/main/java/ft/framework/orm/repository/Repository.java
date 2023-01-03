@@ -67,6 +67,10 @@ public class Repository<T, ID> {
 		return entityManager.delete(instance);
 	}
 	
+	protected boolean existsBy(Predicate<T> predicate) {
+		return entityManager.existsBy(entity, predicate);
+	}
+	
 	protected Optional<T> findBy(Predicate<T> predicate) {
 		return entityManager.findBy(entity, predicate);
 	}
