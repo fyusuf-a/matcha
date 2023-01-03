@@ -234,8 +234,8 @@ public class MappingBuilder {
 		}
 		
 		return Index.builder()
-			.name(formatIndexName(annotation.name(), tableName, columns))
-			.columns(columns)
+			.name(formatIndexName(annotation.name(), tableName, filteredColumns))
+			.columns(filteredColumns)
 			.unique(annotation.unique())
 			.build();
 	}
