@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import ft.app.matcha.domain.like.event.LikeEvent;
 import ft.app.matcha.domain.like.event.UnlikeEvent;
+import ft.app.matcha.domain.like.exception.CannotLikeYourselfException;
 import ft.app.matcha.domain.like.model.LikeStatus;
 import ft.app.matcha.domain.user.User;
 import ft.framework.event.ApplicationEventPublisher;
@@ -28,6 +29,10 @@ public class LikeService {
 	}
 	
 	public Like like(User user, User peer) {
+		if (user.getId() == peer.getId()) {
+			throw new CannotLikeYourselfException();
+		}
+		
 		final var like = repository.findByUserAndPeer(user, peer)
 			.orElseGet(() -> repository.save(
 				new Like()
