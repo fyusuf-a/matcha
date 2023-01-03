@@ -2,7 +2,7 @@ package ft.app.matcha.domain.report;
 
 import java.time.LocalDateTime;
 
-import ft.app.matcha.domain.report.event.ReportCreatedEvent;
+import ft.app.matcha.domain.report.event.ReportedEvent;
 import ft.app.matcha.domain.report.exception.CannotReportYourselfException;
 import ft.app.matcha.domain.user.User;
 import ft.framework.event.ApplicationEventPublisher;
@@ -33,7 +33,7 @@ public class ReportService {
 				.setCreatedAt(LocalDateTime.now())
 		);
 		
-		eventPublisher.publishEvent(new ReportCreatedEvent(this, report));
+		eventPublisher.publishEvent(new ReportedEvent(this, report));
 		
 		return report;
 	}

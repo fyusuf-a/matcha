@@ -6,11 +6,11 @@ import lombok.Getter;
 
 @Getter
 @SuppressWarnings("serial")
-public class ReportCreatedEvent extends ApplicationEvent {
+public class ReportedEvent extends ApplicationEvent {
 	
 	private final Report report;
 	
-	public ReportCreatedEvent(Object source, Report report) {
+	public ReportedEvent(Object source, Report report) {
 		super(source);
 		
 		this.report = report;

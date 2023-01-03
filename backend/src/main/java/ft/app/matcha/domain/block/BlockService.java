@@ -5,8 +5,10 @@ import java.time.LocalDateTime;
 import ft.app.matcha.domain.block.event.BlockEvent;
 import ft.app.matcha.domain.block.exception.CannotBlockYourselfException;
 import ft.app.matcha.domain.block.model.BlockStatus;
+import ft.app.matcha.domain.report.event.ReportedEvent;
 import ft.app.matcha.domain.user.User;
 import ft.framework.event.ApplicationEventPublisher;
+import ft.framework.event.annotation.EventListener;
 import ft.framework.mvc.domain.Page;
 import ft.framework.mvc.domain.Pageable;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +57,16 @@ public class BlockService {
 	
 	public boolean isBlocked(User user, User peer) {
 		return repository.existsByUserAndPeer(user, peer);
+	}
+	
+	@EventListener
+	public void onReported(ReportedEvent event) {
+		final var report = event.getReport();
+		
+		final var user = report.getReporter();
+		final var peer = report.getUser();
+		
+		block(user, peer);
 	}
 	
 }
