@@ -4,6 +4,11 @@
       <v-col cols="12">
         <v-card>
           <v-card-title> Login </v-card-title>
+          <v-card-subtitle>
+            <router-link :to="{ path: '/auth/forgot', query: { from } }">
+              Forgot password?
+            </router-link>
+          </v-card-subtitle>
           <v-card-text>
             <v-form id="form" @submit.prevent="login">
               <v-text-field v-model="inputs.login" label="Login" />
@@ -28,7 +33,6 @@
 import {
   computed,
   defineComponent,
-  onMounted,
   reactive,
   useRoute,
   useRouter,
@@ -65,6 +69,7 @@ export default defineComponent({
     return {
       inputs,
       login,
+      from,
     }
   },
 })
