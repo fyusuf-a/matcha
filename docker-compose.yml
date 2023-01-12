@@ -1,19 +1,6 @@
 version: '3.4'
 
 services:
-  db:
-    image: mysql
-    restart: unless-stopped
-    environment:
-      # MYSQL_ROOT_HOST: localhost
-      MYSQL_ROOT_HOST: '%'
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      # MYSQL_RANDOM_ROOT_PASSWORD: yes
-      # MYSQL_USER: ${DB_USER}
-      # MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: ${DB_DATABASE}
-    volumes:
-      - mysql-data:/var/lib/mysql
   frontend:
     image: fyusufa/matcha_frontend
     ports:
@@ -33,6 +20,17 @@ services:
     restart: unless-stopped
     #    depends_on:
     #      - backend
+  db:
+    image: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_HOST: localhost
+      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+    volumes:
+      - mysql-data:/var/lib/mysql
   phpmyadmin:
     image: phpmyadmin
     restart: unless-stopped
