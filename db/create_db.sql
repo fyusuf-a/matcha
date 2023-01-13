@@ -1,0 +1,2 @@
+GRANT ALL PRIVILEGES ON matcha.* TO 'caceresenzo'@'%';
+FLUSH PRIVILEGES;
