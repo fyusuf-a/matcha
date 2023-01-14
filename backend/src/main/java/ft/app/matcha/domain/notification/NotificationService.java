@@ -13,7 +13,6 @@ import ft.app.matcha.domain.message.event.MessageCreatedEvent;
 import ft.app.matcha.domain.notification.event.NotificationCreatedEvent;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.event.UserViewedEvent;
-import ft.app.matcha.web.form.NotificationPatchForm;
 import ft.framework.event.ApplicationEventPublisher;
 import ft.framework.event.annotation.EventListener;
 import ft.framework.mvc.domain.Page;
@@ -58,13 +57,8 @@ public class NotificationService {
 		return create(user, type, contentAndLink.getLeft(), contentAndLink.getRight());
 	}
 	
-	public Notification patch(Notification notification, NotificationPatchForm form) {
-		Optional.ofNullable(form.getRead()).ifPresent((read) -> {
-			notification.setRead(read);
-			notification.setReadAt(read ? LocalDateTime.now() : null);
-		});
-		
-		return notification;
+	public Notification save(Notification notification) {
+		return repository.save(notification);
 	}
 	
 	@EventListener

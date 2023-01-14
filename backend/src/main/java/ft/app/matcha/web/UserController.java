@@ -1,5 +1,7 @@
 package ft.app.matcha.web;
 
+import java.util.Optional;
+
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserService;
 import ft.app.matcha.domain.user.event.UserViewedEvent;
@@ -74,7 +76,13 @@ public class UserController {
 		@Valid @Body UserPatchForm form,
 		@Principal User user
 	) {
-		return userService.patch(user, form);
+		Optional.ofNullable(form.getFirstName()).ifPresent(user::setFirstName);
+		Optional.ofNullable(form.getLastName()).ifPresent(user::setLastName);
+		Optional.ofNullable(form.getBiography()).ifPresent(user::setBiography);
+		Optional.ofNullable(form.getGender()).ifPresent(user::setGender);
+		Optional.ofNullable(form.getSexualOrientation()).ifPresent(user::setSexualOrientation);
+		
+		return userService.save(user);
 	}
 	
 }

@@ -8,7 +8,6 @@ import ft.app.matcha.domain.like.event.LikedEvent;
 import ft.app.matcha.domain.like.event.UnlikedEvent;
 import ft.app.matcha.domain.report.event.ReportedEvent;
 import ft.app.matcha.domain.user.exception.LoginAlreadyTakenException;
-import ft.app.matcha.web.form.UserPatchForm;
 import ft.framework.event.annotation.EventListener;
 import ft.framework.mvc.domain.Page;
 import ft.framework.mvc.domain.Pageable;
@@ -61,16 +60,6 @@ public class UserService {
 	}
 	
 	public User save(User user) {
-		return repository.save(user);
-	}
-	
-	public User patch(User user, UserPatchForm form) {
-		Optional.ofNullable(form.getFirstName()).ifPresent(user::setFirstName);
-		Optional.ofNullable(form.getLastName()).ifPresent(user::setLastName);
-		Optional.ofNullable(form.getBiography()).ifPresent(user::setBiography);
-		Optional.ofNullable(form.getGender()).ifPresent(user::setGender);
-		Optional.ofNullable(form.getSexualOrientation()).ifPresent(user::setSexualOrientation);
-		
 		return repository.save(user);
 	}
 	

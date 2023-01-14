@@ -86,6 +86,7 @@ public class AuthController {
 	}
 	
 	@PostMapping(path = "/reset-password")
+	@ApiOperation(summary = "Reset a password with a token provided from a 'forgot password' email.")
 	public void resetPassword(
 		@Body @Valid ResetPasswordForm form
 	) {

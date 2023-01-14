@@ -1,5 +1,8 @@
 package ft.app.matcha.web;
 
+import java.time.LocalDateTime;
+import java.util.Optional;
+
 import ft.app.matcha.domain.notification.Notification;
 import ft.app.matcha.domain.notification.NotificationService;
 import ft.app.matcha.domain.notification.exception.InvalidNotificationOwnerException;
@@ -46,7 +49,14 @@ public class NotificationController {
 		@Variable long id,
 		@Principal User currentUser
 	) {
-		return getNotification(id, currentUser);
+		final var notification = notificationService.find(id)
+			.orElseThrow(() -> new NotificationNotFoundException(id));
+		
+		if (notification.getUser().getId() != currentUser.getId()) {
+			throw new InvalidNotificationOwnerException(id);
+		}
+		
+		return notification;
 	}
 	
 	@Authenticated
@@ -57,20 +67,14 @@ public class NotificationController {
 		@Body @Valid NotificationPatchForm form,
 		@Principal User currentUser
 	) {
-		final var notification = getNotification(id, currentUser);
+		final var notification = show(id, currentUser);
 		
-		return notificationService.patch(notification, form);
-	}
-	
-	public Notification getNotification(long id, User currentUser) {
-		final var notification = notificationService.find(id)
-			.orElseThrow(() -> new NotificationNotFoundException(id));
+		Optional.ofNullable(form.getRead()).ifPresent((read) -> {
+			notification.setRead(read);
+			notification.setReadAt(read ? LocalDateTime.now() : null);
+		});
 		
-		if (notification.getUser().getId() != currentUser.getId()) {
-			throw new InvalidNotificationOwnerException(id);
-		}
-		
-		return notification;
+		return notificationService.save(notification);
 	}
 	
 }
