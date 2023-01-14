@@ -9,7 +9,7 @@ import ft.framework.orm.mapping.DataType;
 import ft.framework.orm.mapping.Table;
 import ft.framework.orm.mapping.contraint.Index;
 import ft.framework.orm.mapping.contraint.Unique;
-import ft.framework.orm.mapping.relationship.Relationship;
+import ft.framework.orm.mapping.relationship.ManyToOne;
 import ft.framework.orm.predicate.Predicate;
 
 public interface Dialect {
@@ -22,7 +22,7 @@ public interface Dialect {
 	
 	String buildAlterTableAddColumnStatement(Table table, Column column);
 	
-	String buildAlterTableAddForeignKeyStatement(Table table, Relationship relationship);
+	String buildAlterTableAddForeignKeyStatement(Table table, ManyToOne relationship);
 	
 	String buildCreateIndexStatement(Table table, Index index);
 	

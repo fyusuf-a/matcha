@@ -18,6 +18,7 @@ import com.mysql.cj.MysqlType;
 
 import ft.framework.mvc.domain.Pageable;
 import ft.framework.mvc.domain.Sort;
+import ft.framework.orm.annotation.OnDelete;
 import ft.framework.orm.error.DuplicateRelationshipException;
 import ft.framework.orm.error.DuplicateValueException;
 import ft.framework.orm.mapping.Column;
@@ -27,6 +28,7 @@ import ft.framework.orm.mapping.contraint.Constraint;
 import ft.framework.orm.mapping.contraint.Index;
 import ft.framework.orm.mapping.contraint.Unique;
 import ft.framework.orm.mapping.naming.Named;
+import ft.framework.orm.mapping.relationship.ManyToOne;
 import ft.framework.orm.mapping.relationship.Relationship;
 import ft.framework.orm.predicate.Branch;
 import ft.framework.orm.predicate.Comparison;
@@ -41,6 +43,7 @@ public class MySQLDialect implements Dialect {
 	private static final Map<Branch.Type, String> branchToCode = new EnumMap<>(Branch.Type.class);
 	private static final Map<Comparison.Type, String> comparisonToCode = new EnumMap<>(Comparison.Type.class);
 	private static final Map<Sort.Direction, String> sortDirectionToCode = new EnumMap<>(Sort.Direction.class);
+	private static final Map<OnDelete.Action, String> onDeleteActionToCode = new EnumMap<>(OnDelete.Action.class);
 	
 	static {
 		simpleTypes.put(long.class, MysqlType.BIGINT);
@@ -58,12 +61,9 @@ public class MySQLDialect implements Dialect {
 		simpleTypes.put(Double.class, MysqlType.DOUBLE);
 		simpleTypes.put(float.class, MysqlType.DOUBLE);
 		simpleTypes.put(Float.class, MysqlType.FLOAT);
-		
 		simpleTypes.put(LocalDate.class, MysqlType.DATE);
 		simpleTypes.put(LocalDateTime.class, MysqlType.DATETIME);
-	}
-	
-	static {
+		
 		branchToCode.put(Branch.Type.AND, "AND");
 		branchToCode.put(Branch.Type.OR, "OR");
 		
@@ -79,6 +79,11 @@ public class MySQLDialect implements Dialect {
 		
 		sortDirectionToCode.put(Sort.Direction.ASCENDING, "ASC");
 		sortDirectionToCode.put(Sort.Direction.DESCENDING, "DESC");
+		
+		onDeleteActionToCode.put(OnDelete.Action.RESTRICT, "RESTRICT");
+		onDeleteActionToCode.put(OnDelete.Action.SET_NULL, "SET_NULL");
+		onDeleteActionToCode.put(OnDelete.Action.NO_ACTION, "NO_ACTION");
+		onDeleteActionToCode.put(OnDelete.Action.CASCADE, "CASCADE");
 	}
 	
 	@Override
@@ -230,20 +235,33 @@ public class MySQLDialect implements Dialect {
 	}
 	
 	@Override
-	public String buildAlterTableAddForeignKeyStatement(Table table, Relationship relationship) {
-		final var sql = new StringBuilder();
-		
+	public String buildAlterTableAddForeignKeyStatement(Table table, ManyToOne relationship) {
 		final var targetTable = relationship.getTarget().getTable();
 		final var idColumn = table.getIdColumn();
 		
-		sql.append("ALTER TABLE `").append(table.getName()).append("` ");
-		
 		final var keyName = "fk-%s-%s".formatted(table.getName(), relationship.getName());
 		
-		sql.append("ADD CONSTRAINT `").append(keyName).append("` FOREIGN KEY (`").append(relationship.getName()).append("`)")
-			.append(" REFERENCES `").append(targetTable.getName()).append("`(`").append(idColumn.getName()).append("`);");
+		final var sql = new StringBuilder()
+			.append("ALTER TABLE ")
+			.append(quote(table))
+			.append(" ADD CONSTRAINT ")
+			.append(quote(keyName))
+			.append(" FOREIGN KEY ")
+			.append(paranthesis(quote(relationship)))
+			.append(" REFERENCES ")
+			.append(quote(targetTable))
+			.append(paranthesis(quote(idColumn)));
 		
-		return sql.toString();
+		final var onDeleteAction = relationship.getOnDeleteAction();
+		if (onDeleteAction != null) {
+			sql
+				.append(" ON DELETE ")
+				.append(onDeleteActionToCode.get(onDeleteAction));
+		}
+		
+		return sql
+			.append(";")
+			.toString();
 	}
 	
 	@Override
@@ -557,7 +575,7 @@ public class MySQLDialect implements Dialect {
 			.collect(Collectors.joining(", "));
 		
 		if (addParentheses) {
-			return "(%s)".formatted(quoted);
+			return paranthesis(quoted);
 		}
 		
 		return quoted;
@@ -568,7 +586,11 @@ public class MySQLDialect implements Dialect {
 	}
 	
 	public String quote(String name) {
-		return String.format("`%s`", name);
+		return "`%s`".formatted(name);
+	}
+	
+	public String paranthesis(String code) {
+		return "(%s)".formatted(code);
 	}
 	
 }

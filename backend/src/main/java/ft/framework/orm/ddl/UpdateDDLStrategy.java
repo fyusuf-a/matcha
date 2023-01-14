@@ -98,6 +98,7 @@ public class UpdateDDLStrategy implements DDLStrategy {
 			final var sql = dialect.buildAlterTableAddForeignKeyStatement(table, manyToOne);
 			final var result = execute(sql);
 			
+			System.out.println(sql);
 			log.info("Added forein key `{}` to table `{}`...", manyToOne.getForeignKeyName(), table.getName());
 			
 			return result;
