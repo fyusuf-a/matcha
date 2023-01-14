@@ -29,11 +29,13 @@ public class UserController {
 	private final ApplicationEventPublisher eventPublisher;
 	
 	@GetMapping
+	@ApiOperation(summary = "List users.")
 	public Page<User> index(Pageable pageable) {
 		return userService.findAll(pageable);
 	}
 	
 	@GetMapping(path = "{id}")
+	@ApiOperation(summary = "List an user.")
 	public User show(
 		@Variable long id
 	) {
@@ -57,6 +59,7 @@ public class UserController {
 	
 	@Authenticated
 	@PatchMapping(path = "{id}")
+	@ApiOperation(summary = "Update an user.")
 	public User patch(
 		@Variable long id,
 		@Valid @Body UserPatchForm form,

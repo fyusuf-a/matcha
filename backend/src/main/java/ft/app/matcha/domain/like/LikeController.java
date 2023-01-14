@@ -16,6 +16,7 @@ import ft.framework.mvc.annotation.RequestMapping;
 import ft.framework.mvc.annotation.Variable;
 import ft.framework.mvc.domain.Page;
 import ft.framework.mvc.domain.Pageable;
+import ft.framework.swagger.annotation.ApiOperation;
 import lombok.RequiredArgsConstructor;
 
 @Controller
@@ -27,6 +28,7 @@ public class LikeController {
 	private final UserService userService;
 	
 	@GetMapping
+	@ApiOperation(summary = "List likes given by a peer.")
 	public Page<LikeDto> list(
 		Pageable pageable,
 		@Query long peerId
@@ -39,6 +41,7 @@ public class LikeController {
 	
 	@Authenticated
 	@GetMapping(path = "{peerId}")
+	@ApiOperation(summary = "Show the like status with a peer.")
 	public LikeStatus show(
 		@Variable long peerId,
 		@Principal User currentUser
@@ -50,6 +53,7 @@ public class LikeController {
 	
 	@Authenticated
 	@PostMapping(path = "{peerId}")
+	@ApiOperation(summary = "Like a peer.")
 	public LikeStatus like(
 		@Variable long peerId,
 		@Principal User currentUser
@@ -62,6 +66,7 @@ public class LikeController {
 	
 	@Authenticated
 	@DeleteMapping(path = "{peerId}")
+	@ApiOperation(summary = "Unlike a peer.")
 	public LikeStatus unlike(
 		@Variable long peerId,
 		@Principal User currentUser

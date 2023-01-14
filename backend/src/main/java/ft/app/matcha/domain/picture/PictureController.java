@@ -27,6 +27,7 @@ import ft.framework.mvc.annotation.ResponseStatus;
 import ft.framework.mvc.annotation.Variable;
 import ft.framework.mvc.domain.Page;
 import ft.framework.mvc.domain.Pageable;
+import ft.framework.swagger.annotation.ApiOperation;
 import ft.framework.util.MediaTypes;
 import ft.framework.validation.annotation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class PictureController {
 	private final PictureService pictureService;
 	
 	@GetMapping
+	@ApiOperation(summary = "List the picture of an user.")
 	public Page<Picture> list(
 		Pageable pageable,
 		@Query(required = false) Long userId,
@@ -61,6 +63,7 @@ public class PictureController {
 	@SneakyThrows
 	@Authenticated
 	@PostMapping(consume = MediaTypes.FORM_DATA)
+	@ApiOperation(summary = "Upload a new picture.")
 	public Picture upload(
 		@FormData Part file,
 		@Principal User user
@@ -73,6 +76,7 @@ public class PictureController {
 	}
 	
 	@GetMapping(path = "{id}")
+	@ApiOperation(summary = "Show a picture.")
 	public Picture show(
 		@Variable long id
 	) {
@@ -81,6 +85,7 @@ public class PictureController {
 	}
 	
 	@PatchMapping(path = "{id}")
+	@ApiOperation(summary = "Update a picture.")
 	public Picture patch(
 		@Variable long id,
 		@Body @Valid PicturePatchForm form
@@ -95,6 +100,7 @@ public class PictureController {
 	}
 	
 	@GetMapping(path = "{id}/view", produce = MediaTypes.PNG)
+	@ApiOperation(summary = "View a picture.")
 	public InputStream view(
 		@Variable long id
 	) {
@@ -106,6 +112,7 @@ public class PictureController {
 	@Authenticated
 	@ResponseStatus(HttpStatus.ACCEPTED_202)
 	@DeleteMapping(path = "{id}")
+	@ApiOperation(summary = "Delete a picture.")
 	public void delete(
 		@Variable long id,
 		@Principal User user

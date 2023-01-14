@@ -14,6 +14,7 @@ import ft.framework.mvc.annotation.Query;
 import ft.framework.mvc.annotation.RequestMapping;
 import ft.framework.mvc.domain.Page;
 import ft.framework.mvc.domain.Pageable;
+import ft.framework.swagger.annotation.ApiOperation;
 import ft.framework.validation.annotation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +28,7 @@ public class MessageController {
 	
 	@Authenticated
 	@GetMapping
+	@ApiOperation(summary = "List messages with a peer.")
 	public Page<Message> list(
 		Pageable pageable,
 		@Query long peerId,
@@ -40,6 +42,7 @@ public class MessageController {
 	
 	@Authenticated
 	@PostMapping
+	@ApiOperation(summary = "Send a message to a peer.")
 	public Message create(
 		@Body @Valid MessageCreateForm form,
 		@Principal User currentUser

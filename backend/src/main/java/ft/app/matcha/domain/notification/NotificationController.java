@@ -15,6 +15,7 @@ import ft.framework.mvc.annotation.RequestMapping;
 import ft.framework.mvc.annotation.Variable;
 import ft.framework.mvc.domain.Page;
 import ft.framework.mvc.domain.Pageable;
+import ft.framework.swagger.annotation.ApiOperation;
 import ft.framework.validation.annotation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +28,7 @@ public class NotificationController {
 	
 	@Authenticated
 	@GetMapping
+	@ApiOperation(summary = "List received notifications.")
 	public Page<Notification> list(
 		Pageable pageable,
 		@Query(required = false) boolean includeAll,
@@ -37,6 +39,7 @@ public class NotificationController {
 	
 	@Authenticated
 	@GetMapping(path = "{id}")
+	@ApiOperation(summary = "Show a notification.")
 	public Notification show(
 		@Variable long id,
 		@Principal User currentUser
@@ -46,6 +49,7 @@ public class NotificationController {
 	
 	@Authenticated
 	@PatchMapping(path = "{id}")
+	@ApiOperation(summary = "Update a notification.")
 	public Notification patch(
 		@Variable long id,
 		@Body @Valid NotificationPatchForm form,
