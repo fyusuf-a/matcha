@@ -1,7 +1,6 @@
 package ft.app.matcha.domain.user;
 
 import ft.app.matcha.domain.user.event.UserViewedEvent;
-import ft.app.matcha.domain.user.exception.OnlyYourselfException;
 import ft.app.matcha.domain.user.exception.UserNotFoundException;
 import ft.app.matcha.domain.user.model.UserPatchForm;
 import ft.framework.event.ApplicationEventPublisher;
@@ -58,17 +57,21 @@ public class UserController {
 	}
 	
 	@Authenticated
-	@PatchMapping(path = "{id}")
-	@ApiOperation(summary = "Update an user.")
-	public User patch(
-		@Variable long id,
+	@GetMapping(path = "@me")
+	@ApiOperation(summary = "Show yourself.")
+	public User showMe(
+		@Principal User user
+	) {
+		return user;
+	}
+	
+	@Authenticated
+	@PatchMapping(path = "@me")
+	@ApiOperation(summary = "Update yourself.")
+	public User patchMe(
 		@Valid @Body UserPatchForm form,
 		@Principal User user
 	) {
-		if (id != user.getId()) {
-			throw new OnlyYourselfException();
-		}
-		
 		return userService.patch(user, form);
 	}
 	
