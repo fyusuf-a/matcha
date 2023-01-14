@@ -1,12 +1,12 @@
 package ft.app.matcha.web;
 
-import ft.app.matcha.domain.report.Report;
 import ft.app.matcha.domain.report.ReportService;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserService;
 import ft.app.matcha.domain.user.exception.UserNotFoundException;
 import ft.app.matcha.web.dto.ReportDto;
 import ft.app.matcha.web.form.ReportCreateForm;
+import ft.app.matcha.web.map.ReportMapper;
 import ft.framework.mvc.annotation.Authenticated;
 import ft.framework.mvc.annotation.Body;
 import ft.framework.mvc.annotation.Controller;
@@ -27,6 +27,7 @@ public class ReportController {
 	
 	private final ReportService reportService;
 	private final UserService userService;
+	private final ReportMapper reportMapper;
 	
 	@Authenticated
 	@GetMapping
@@ -36,20 +37,21 @@ public class ReportController {
 		@Principal User currentUser
 	) {
 		return reportService.findAll(currentUser, pageable)
-			.map(ReportDto::from);
+			.map((report) -> reportMapper.toDto(report, currentUser));
 	}
 	
 	@Authenticated
 	@PostMapping
 	@ApiOperation(summary = "Report someone.")
-	public Report create(
+	public ReportDto create(
 		@Body @Valid ReportCreateForm form,
 		@Principal User currentUser
 	) {
 		final var userId = form.getUserId();
 		final var user = userService.find(userId).orElseThrow(() -> new UserNotFoundException(userId));
 		
-		return reportService.create(form.getReason(), user, currentUser);
+		final var report = reportService.create(form.getReason(), user, currentUser);
+		return reportMapper.toDto(report, currentUser);
 	}
 	
 }

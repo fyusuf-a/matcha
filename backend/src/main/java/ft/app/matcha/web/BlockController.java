@@ -1,12 +1,15 @@
 package ft.app.matcha.web;
 
-import ft.app.matcha.domain.block.BlockService;
+import ft.app.matcha.domain.relationship.Relationship;
+import ft.app.matcha.domain.relationship.RelationshipService;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserService;
 import ft.app.matcha.domain.user.exception.UserNotFoundException;
-import ft.app.matcha.web.dto.BlockDto;
-import ft.app.matcha.web.dto.BlockStatus;
+import ft.app.matcha.web.dto.UserDto;
+import ft.app.matcha.web.form.LikeForm;
+import ft.app.matcha.web.map.UserMapper;
 import ft.framework.mvc.annotation.Authenticated;
+import ft.framework.mvc.annotation.Body;
 import ft.framework.mvc.annotation.Controller;
 import ft.framework.mvc.annotation.DeleteMapping;
 import ft.framework.mvc.annotation.GetMapping;
@@ -20,60 +23,51 @@ import ft.framework.swagger.annotation.ApiOperation;
 import lombok.RequiredArgsConstructor;
 
 @Controller
-@RequestMapping(path = "/blocks")
+@RequestMapping(path = "/users/@me")
 @RequiredArgsConstructor
+@Authenticated
 public class BlockController {
 	
-	private final BlockService blockService;
+	private final RelationshipService relationshipService;
 	private final UserService userService;
+	private final UserMapper userMapper;
 	
-	@Authenticated
-	@GetMapping
-	@ApiOperation(summary = "List blocked users.")
-	public Page<BlockDto> list(
+	@GetMapping(path = "blocking")
+	@ApiOperation(summary = "List users that you blocked.")
+	public Page<UserDto> list(
 		Pageable pageable,
 		@Principal User currentUser
 	) {
-		return blockService.findAll(currentUser, pageable)
-			.map(BlockDto::fromPeer);
+		final var user = currentUser;
+		
+		return relationshipService.findAllByUser(user, Relationship.Type.BLOCK, pageable)
+			.map((relationship) -> userMapper.toDto(relationship.getPeer(), currentUser));
+	}
+	
+	@PostMapping(path = "blocking")
+	@ApiOperation(summary = "Block a peer.")
+	public UserDto like(
+		@Body LikeForm form,
+		@Principal User currentUser
+	) {
+		final var user = currentUser;
+		final var peer = getUser(form.getPeerId());
+		final var block = relationshipService.block(user, peer);
+		
+		return userMapper.toDto(block.getPeer(), currentUser);
 	}
 	
 	@Authenticated
-	@GetMapping(path = "{peerId}")
-	@ApiOperation(summary = "See if you blocked an user.")
-	public BlockStatus show(
+	@DeleteMapping(path = "blocking/{peerId}")
+	@ApiOperation(summary = "Unblock a peer.")
+	public void unlike(
 		@Variable long peerId,
 		@Principal User currentUser
 	) {
+		final var user = currentUser;
 		final var peer = getUser(peerId);
 		
-		return blockService.getStatus(currentUser, peer);
-	}
-	
-	@Authenticated
-	@PostMapping(path = "{peerId}")
-	@ApiOperation(summary = "Block an user.")
-	public BlockStatus block(
-		@Variable long peerId,
-		@Principal User currentUser
-	) {
-		final var peer = getUser(peerId);
-		final var block = blockService.block(currentUser, peer);
-		
-		return BlockStatus.from(block);
-	}
-	
-	@Authenticated
-	@DeleteMapping(path = "{peerId}")
-	@ApiOperation(summary = "Unblock an user.")
-	public BlockStatus unblock(
-		@Variable long peerId,
-		@Principal User currentUser
-	) {
-		final var peer = getUser(peerId);
-		blockService.unblock(currentUser, peer);
-		
-		return BlockStatus.none();
+		relationshipService.unblock(user, peer);
 	}
 	
 	public User getUser(long id) {

@@ -1,4 +1,4 @@
-package ft.app.matcha.domain.block;
+package ft.app.matcha.domain.relationship;
 
 import java.time.LocalDateTime;
 
@@ -19,14 +19,14 @@ import lombok.experimental.FieldNameConstants;
 @Entity
 @Table(uniqueConstraints = {
 	@UniqueConstraint(columnNames = {
-		Block.Fields.user,
-		Block.Fields.peer,
+		Relationship.Fields.user,
+		Relationship.Fields.peer,
 	})
 })
 @Data
 @Accessors(chain = true)
 @FieldNameConstants
-public class Block {
+public class Relationship {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,7 +38,17 @@ public class Block {
 	@ManyToOne(optional = false)
 	private User peer;
 	
-	@Column
+	@Column(nullable = false)
+	private Type type;
+	
+	@Column(nullable = false)
 	private LocalDateTime createdAt;
+	
+	public enum Type {
+		
+		LIKE,
+		BLOCK;
+	
+	}
 	
 }

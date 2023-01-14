@@ -17,12 +17,6 @@ import ft.app.matcha.domain.auth.JwtService;
 import ft.app.matcha.domain.auth.Token;
 import ft.app.matcha.domain.auth.TokenRepository;
 import ft.app.matcha.domain.auth.TokenService;
-import ft.app.matcha.domain.block.Block;
-import ft.app.matcha.domain.block.BlockRepository;
-import ft.app.matcha.domain.block.BlockService;
-import ft.app.matcha.domain.like.Like;
-import ft.app.matcha.domain.like.LikeRepository;
-import ft.app.matcha.domain.like.LikeService;
 import ft.app.matcha.domain.message.Message;
 import ft.app.matcha.domain.message.MessageRepository;
 import ft.app.matcha.domain.message.MessageService;
@@ -32,6 +26,9 @@ import ft.app.matcha.domain.notification.NotificationService;
 import ft.app.matcha.domain.picture.Picture;
 import ft.app.matcha.domain.picture.PictureRepository;
 import ft.app.matcha.domain.picture.PictureService;
+import ft.app.matcha.domain.relationship.Relationship;
+import ft.app.matcha.domain.relationship.RelationshipRepository;
+import ft.app.matcha.domain.relationship.RelationshipService;
 import ft.app.matcha.domain.report.Report;
 import ft.app.matcha.domain.report.ReportRepository;
 import ft.app.matcha.domain.report.ReportService;
@@ -57,6 +54,8 @@ import ft.app.matcha.web.TagController;
 import ft.app.matcha.web.UserController;
 import ft.app.matcha.web.UserTagController;
 import ft.app.matcha.web.WebSocketController;
+import ft.app.matcha.web.map.ReportMapper;
+import ft.app.matcha.web.map.UserMapper;
 import ft.framework.convert.service.ConvertionService;
 import ft.framework.convert.service.SimpleConvertionService;
 import ft.framework.event.ApplicationEventPublisher;
@@ -128,14 +127,14 @@ public class Matcha {
 			final var ormConfiguration = configureOrm(databaseConfiguration, new Class<?>[] {
 				User.class,
 				Notification.class,
-				Like.class,
+				Relationship.class,
 				Token.class,
 				Picture.class,
 				Tag.class,
 				UserTag.class,
 				Message.class,
 				Report.class,
-				Block.class,
+				Relationship.class,
 			});
 			
 			final var webSocket = WebSocketHandler.create(objectMapper);
@@ -147,12 +146,11 @@ public class Matcha {
 			final var notificationRepository = new NotificationRepository(ormConfiguration.getEntityManager());
 			final var tokenRepository = new TokenRepository(ormConfiguration.getEntityManager());
 			final var pictureRepository = new PictureRepository(ormConfiguration.getEntityManager());
-			final var likeRepository = new LikeRepository(ormConfiguration.getEntityManager());
 			final var tagRepository = new TagRepository(ormConfiguration.getEntityManager());
 			final var userTagRepository = new UserTagRepository(ormConfiguration.getEntityManager());
 			final var messageRepository = new MessageRepository(ormConfiguration.getEntityManager());
 			final var reportRepository = new ReportRepository(ormConfiguration.getEntityManager());
-			final var blockRepository = new BlockRepository(ormConfiguration.getEntityManager());
+			final var relationshipRepository = new RelationshipRepository(ormConfiguration.getEntityManager());
 			
 			final var emailSender = new EmailSender(emailConfiguration);
 			
@@ -161,15 +159,14 @@ public class Matcha {
 			final var tokenService = new TokenService(tokenRepository, authConfiguration, eventPublisher);
 			final var authService = new AuthService(tokenService, userService, jwtService, emailSender, eventPublisher);
 			final var pictureService = new PictureService(pictureRepository, matchaConfiguration);
-			final var blockService = new BlockService(blockRepository, eventPublisher);
-			final var likeService = new LikeService(likeRepository, eventPublisher, blockService);
+			final var relationshipService = new RelationshipService(relationshipRepository, eventPublisher);
 			final var tagService = new TagService(tagRepository);
 			final var userTagService = new UserTagService(userTagRepository, matchaConfiguration);
 			final var messageService = new MessageService(messageRepository, eventPublisher);
 			final var jwtAuthenticator = new JwtAuthenticator(jwtService);
 			final var webSocketService = new WebSocketController(webSocket, jwtAuthenticator);
 			final var reportService = new ReportService(reportRepository, eventPublisher);
-			final var notificationService = new NotificationService(notificationRepository, blockService, eventPublisher);
+			final var notificationService = new NotificationService(notificationRepository, relationshipService, eventPublisher);
 			
 			final var services = Arrays.asList(new Object[] {
 				userService,
@@ -177,13 +174,12 @@ public class Matcha {
 				authService,
 				notificationService,
 				pictureService,
-				likeService,
 				tagService,
 				userTagService,
 				messageService,
 				webSocketService,
 				reportService,
-				blockService,
+				relationshipService,
 			});
 			
 			final var eventListenerFactory = new EventListenerFactory(eventPublisher);
@@ -192,19 +188,22 @@ public class Matcha {
 			final var scheduledFactory = new ScheduledFactory(taskScheduler);
 			services.forEach(scheduledFactory::scan);
 			
+			final var userMapper = new UserMapper(relationshipService);
+			final var reportMapper = new ReportMapper(userMapper);
+			
 			final var mvcConfiguration = configureMvc(objectMapper, validator, convertionService, jwtAuthenticator);
 			final var routeRegistry = new RouteRegistry(mvcConfiguration);
 			
 			routeRegistry.add(new AuthController(authService));
 			routeRegistry.add(new PictureController(userService, pictureService));
-			routeRegistry.add(new UserController(userService, eventPublisher));
-			routeRegistry.add(new LikeController(likeService, userService));
+			routeRegistry.add(new UserController(userService, eventPublisher, userMapper));
+			routeRegistry.add(new LikeController(relationshipService, userService, userMapper));
 			routeRegistry.add(new TagController(tagService, userTagService));
 			routeRegistry.add(new UserTagController(userTagService, userService, tagService));
 			routeRegistry.add(new MessageController(messageService, userService));
 			routeRegistry.add(new NotificationController(notificationService));
-			routeRegistry.add(new ReportController(reportService, userService));
-			routeRegistry.add(new BlockController(blockService, userService));
+			routeRegistry.add(new ReportController(reportService, userService, reportMapper));
+			routeRegistry.add(new BlockController(relationshipService, userService, userMapper));
 			
 			final var swagger = new OpenAPI()
 				.schemaRequirement("JWT", new SecurityScheme()

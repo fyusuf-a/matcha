@@ -1,4 +1,4 @@
-package ft.app.matcha.domain.like.event;
+package ft.app.matcha.domain.relationship.event;
 
 import ft.app.matcha.domain.user.User;
 import ft.framework.event.ApplicationEvent;

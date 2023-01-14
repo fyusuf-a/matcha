@@ -2,24 +2,19 @@ package ft.app.matcha.domain.notification;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import ft.app.matcha.domain.like.Like;
 import ft.app.matcha.domain.message.Message;
 import ft.app.matcha.domain.user.User;
 
 public class NotificationFormatter {
 	
-	public static Pair<String, String> formatLiked(Like like) {
-		final var user = like.getUser();
-		
+	public static Pair<String, String> formatLiked(User user) {
 		return Pair.of(
 			"%s liked you!".formatted(user.getFirstName()),
 			toUserLink(user)
 		);
 	}
 	
-	public static Pair<String, String> formatLikedBack(Like like) {
-		final var user = like.getUser();
-		
+	public static Pair<String, String> formatLikedBack(User user) {
 		return Pair.of(
 			"%s liked you back!".formatted(user.getFirstName()),
 			toUserLink(user)

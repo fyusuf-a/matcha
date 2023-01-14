@@ -3,9 +3,9 @@ package ft.app.matcha.domain.user;
 import java.util.Optional;
 
 import ft.app.matcha.configuration.MatchaConfigurationProperties;
-import ft.app.matcha.domain.block.event.BlockedEvent;
-import ft.app.matcha.domain.like.event.LikedEvent;
-import ft.app.matcha.domain.like.event.UnlikedEvent;
+import ft.app.matcha.domain.relationship.event.BlockedEvent;
+import ft.app.matcha.domain.relationship.event.LikedEvent;
+import ft.app.matcha.domain.relationship.event.UnlikedEvent;
 import ft.app.matcha.domain.report.event.ReportedEvent;
 import ft.app.matcha.domain.user.exception.LoginAlreadyTakenException;
 import ft.framework.event.annotation.EventListener;
@@ -65,7 +65,7 @@ public class UserService {
 	
 	@EventListener
 	public void onLiked(LikedEvent event) {
-		final var user = event.getLike().getPeer();
+		final var user = event.getPeer();
 		
 		changeFame(user, fameValues.onLike());
 	}
@@ -79,7 +79,7 @@ public class UserService {
 	
 	@EventListener
 	public void onBlocked(BlockedEvent event) {
-		final var user = event.getBlock().getPeer();
+		final var user = event.getPeer();
 		
 		changeFame(user, fameValues.onBlock());
 	}

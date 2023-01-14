@@ -1,4 +1,4 @@
-package ft.app.matcha.domain.like.exception;
+package ft.app.matcha.domain.relationship.exception;
 
 import org.eclipse.jetty.http.HttpStatus;
 

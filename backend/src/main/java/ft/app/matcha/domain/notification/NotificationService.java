@@ -6,11 +6,11 @@ import java.util.Optional;
 import org.apache.commons.lang3.tuple.Pair;
 
 import ft.app.matcha.domain.auth.event.RegisterEvent;
-import ft.app.matcha.domain.block.BlockService;
-import ft.app.matcha.domain.like.event.LikedEvent;
-import ft.app.matcha.domain.like.event.UnlikedEvent;
 import ft.app.matcha.domain.message.event.MessageCreatedEvent;
 import ft.app.matcha.domain.notification.event.NotificationCreatedEvent;
+import ft.app.matcha.domain.relationship.RelationshipService;
+import ft.app.matcha.domain.relationship.event.LikedEvent;
+import ft.app.matcha.domain.relationship.event.UnlikedEvent;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.event.UserViewedEvent;
 import ft.framework.event.ApplicationEventPublisher;
@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class NotificationService {
 	
 	private final NotificationRepository repository;
-	private final BlockService blockService;
+	private final RelationshipService relationshipService;
 	private final ApplicationEventPublisher eventPublisher;
 	
 	public Optional<Notification> find(long id) {
@@ -75,12 +75,11 @@ public class NotificationService {
 			return;
 		}
 		
-		final var like = event.getLike();
-		final var user = like.getUser();
-		final var peer = like.getPeer();
+		final var user = event.getUser();
+		final var peer = event.getPeer();
 		
 		if (canCreate(peer, user)) {
-			create(peer, Notification.Type.LIKED, NotificationFormatter.formatLiked(like));
+			create(peer, Notification.Type.LIKED, NotificationFormatter.formatLiked(user));
 		}
 	}
 	
@@ -114,12 +113,11 @@ public class NotificationService {
 			return;
 		}
 		
-		final var like = event.getLike();
-		final var user = like.getUser();
-		final var peer = like.getPeer();
+		final var user = event.getUser();
+		final var peer = event.getPeer();
 		
 		if (canCreate(peer, user)) {
-			create(peer, Notification.Type.LIKED_BACK, NotificationFormatter.formatLikedBack(like));
+			create(peer, Notification.Type.LIKED_BACK, NotificationFormatter.formatLikedBack(user));
 		}
 	}
 	
@@ -135,7 +133,7 @@ public class NotificationService {
 	}
 	
 	public boolean canCreate(User user, User peer) {
-		return !blockService.isBlocked(user, peer);
+		return !relationshipService.isBlocked(user, peer);
 	}
 	
 }
