@@ -4,9 +4,9 @@ import java.time.LocalDateTime;
 
 import ft.app.matcha.domain.block.event.BlockedEvent;
 import ft.app.matcha.domain.block.exception.CannotBlockYourselfException;
-import ft.app.matcha.domain.block.model.BlockStatus;
 import ft.app.matcha.domain.report.event.ReportedEvent;
 import ft.app.matcha.domain.user.User;
+import ft.app.matcha.web.dto.BlockStatus;
 import ft.framework.event.ApplicationEventPublisher;
 import ft.framework.event.annotation.EventListener;
 import ft.framework.mvc.domain.Page;

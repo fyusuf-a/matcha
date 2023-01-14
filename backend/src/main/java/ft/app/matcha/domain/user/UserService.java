@@ -8,7 +8,7 @@ import ft.app.matcha.domain.like.event.LikedEvent;
 import ft.app.matcha.domain.like.event.UnlikedEvent;
 import ft.app.matcha.domain.report.event.ReportedEvent;
 import ft.app.matcha.domain.user.exception.LoginAlreadyTakenException;
-import ft.app.matcha.domain.user.model.UserPatchForm;
+import ft.app.matcha.web.form.UserPatchForm;
 import ft.framework.event.annotation.EventListener;
 import ft.framework.mvc.domain.Page;
 import ft.framework.mvc.domain.Pageable;

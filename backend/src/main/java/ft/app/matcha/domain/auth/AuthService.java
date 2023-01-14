@@ -5,14 +5,6 @@ import java.time.LocalDateTime;
 import ft.app.matcha.domain.auth.event.RegisterEvent;
 import ft.app.matcha.domain.auth.exception.InvalidTokenException;
 import ft.app.matcha.domain.auth.exception.WrongLoginOrPasswordException;
-import ft.app.matcha.domain.auth.model.ResetPasswordForm;
-import ft.app.matcha.domain.auth.model.ConfirmForm;
-import ft.app.matcha.domain.auth.model.ForgotForm;
-import ft.app.matcha.domain.auth.model.LoginForm;
-import ft.app.matcha.domain.auth.model.LogoutForm;
-import ft.app.matcha.domain.auth.model.RefreshForm;
-import ft.app.matcha.domain.auth.model.RegisterForm;
-import ft.app.matcha.domain.auth.model.Tokens;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserService;
 import ft.framework.event.ApplicationEventPublisher;
@@ -27,17 +19,17 @@ public class AuthService {
 	private final EmailSender emailSender;
 	private final ApplicationEventPublisher eventPublisher;
 	
-	public Tokens login(LoginForm form) {
-		final var password = encode(form.getPassword());
+	public Tokens login(String login, String password) {
+		final var encoded = encode(password);
 		
-		return userService.find(form.getLogin(), password)
+		return userService.find(login, encoded)
 			.map(this::createTokens)
 			.orElseThrow(WrongLoginOrPasswordException::new);
 	}
 	
-	public Tokens register(RegisterForm form) {
-		final var password = encode(form.getPassword());
-		final var user = userService.create(form.getFirstName(), form.getLastName(), form.getEmail(), form.getLogin(), password);
+	public Tokens register(String firstName, String lastName, String email, String login, String password) {
+		final var encoded = encode(password);
+		final var user = userService.create(firstName, lastName, email, login, encoded);
 		
 		eventPublisher.publishEvent(new RegisterEvent(this, user));
 		
@@ -47,19 +39,19 @@ public class AuthService {
 		return createTokens(user);
 	}
 	
-	public Tokens refresh(RefreshForm form) {
-		return tokenService.validate(Token.Type.REFRESH, form.getRefreshToken())
+	public Tokens refresh(String refreshToken) {
+		return tokenService.validate(Token.Type.REFRESH, refreshToken)
 			.map(this::createTokens)
 			.orElseThrow(() -> new InvalidTokenException(Token.Type.REFRESH));
 	}
 	
-	public void logout(LogoutForm form) {
-		tokenService.validate(Token.Type.REFRESH, form.getRefreshToken())
+	public void logout(String refreshToken) {
+		tokenService.validate(Token.Type.REFRESH, refreshToken)
 			.orElseThrow(() -> new InvalidTokenException(Token.Type.REFRESH));
 	}
 	
-	public void confirm(ConfirmForm form) {
-		final var user = tokenService.validate(Token.Type.EMAIL, form.getToken())
+	public void confirm(String confirmToken) {
+		final var user = tokenService.validate(Token.Type.EMAIL, confirmToken)
 			.orElseThrow(() -> new InvalidTokenException(Token.Type.EMAIL));
 		
 		userService.save(user
@@ -68,18 +60,18 @@ public class AuthService {
 		);
 	}
 	
-	public void forgot(ForgotForm form) {
-		userService.find(form.getEmail())
+	public void forgot(String email) {
+		userService.find(email)
 			.map((user) -> tokenService.create(Token.Type.PASSWORD, user))
 			.ifPresent(emailSender::sendPasswordResetEmail);
 	}
 	
-	public void resetPassword(ResetPasswordForm form) {
-		final var user = tokenService.validate(Token.Type.PASSWORD, form.getToken())
+	public void resetPassword(String passwordToken, String password) {
+		final var user = tokenService.validate(Token.Type.PASSWORD, passwordToken)
 			.orElseThrow(() -> new InvalidTokenException(Token.Type.PASSWORD));
 		
-		final var password = encode(form.getPassword());
-		userService.save(user.setPassword(password));
+		final var encoded = encode(password);
+		userService.save(user.setPassword(encoded));
 	}
 	
 	private Tokens createTokens(User user) {

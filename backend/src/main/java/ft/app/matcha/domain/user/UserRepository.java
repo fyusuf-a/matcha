@@ -3,7 +3,6 @@ package ft.app.matcha.domain.user;
 import java.util.List;
 import java.util.Optional;
 
-import ft.app.matcha.domain.user.model.Gender;
 import ft.framework.orm.EntityManager;
 import ft.framework.orm.repository.Repository;
 

@@ -12,8 +12,6 @@ import javax.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import ft.app.matcha.domain.user.model.Gender;
-import ft.app.matcha.domain.user.model.SexualOrientation;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.experimental.FieldNameConstants;
