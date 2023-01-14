@@ -9,7 +9,7 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ChangePasswordForm {
+public class ResetPasswordForm {
 	
 	@NotBlank
 	private String token;

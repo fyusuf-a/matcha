@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import ft.app.matcha.domain.auth.event.RegisterEvent;
 import ft.app.matcha.domain.auth.exception.InvalidTokenException;
 import ft.app.matcha.domain.auth.exception.WrongLoginOrPasswordException;
-import ft.app.matcha.domain.auth.model.ChangePasswordForm;
+import ft.app.matcha.domain.auth.model.ResetPasswordForm;
 import ft.app.matcha.domain.auth.model.ConfirmForm;
 import ft.app.matcha.domain.auth.model.ForgotForm;
 import ft.app.matcha.domain.auth.model.LoginForm;
@@ -74,7 +74,7 @@ public class AuthService {
 			.ifPresent(emailSender::sendPasswordResetEmail);
 	}
 	
-	public void changePassword(ChangePasswordForm form) {
+	public void resetPassword(ResetPasswordForm form) {
 		final var user = tokenService.validate(Token.Type.PASSWORD, form.getToken())
 			.orElseThrow(() -> new InvalidTokenException(Token.Type.PASSWORD));
 		
