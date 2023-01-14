@@ -13,7 +13,9 @@ import ft.app.matcha.domain.picture.exception.PictureNotFoundException;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserService;
 import ft.app.matcha.domain.user.exception.UserNotFoundException;
+import ft.app.matcha.web.dto.PictureDto;
 import ft.app.matcha.web.form.PicturePatchForm;
+import ft.app.matcha.web.map.PictureMapper;
 import ft.framework.mvc.annotation.Authenticated;
 import ft.framework.mvc.annotation.Body;
 import ft.framework.mvc.annotation.Controller;
@@ -42,14 +44,25 @@ public class PictureController {
 	
 	private final UserService userService;
 	private final PictureService pictureService;
+	private final PictureMapper pictureMapper;
 	
 	@GetMapping
 	@ApiOperation(summary = "List the picture of an user.")
-	public Page<Picture> list(
+	public Page<PictureDto> list(
 		Pageable pageable,
 		@Query(required = false) Long userId,
 		@Principal User currentUser
 	) {
+		final var page = doList(pageable, userId, currentUser);
+		return pictureMapper.toDto(page);
+	}
+	
+	private Page<Picture> doList(
+		Pageable pageable,
+		Long userId,
+		User currentUser
+	) {
+		
 		if (userId != null) {
 			final var user = userService.find(userId).orElseThrow(() -> new UserNotFoundException(userId));
 			return pictureService.findAll(user, pageable);
@@ -66,39 +79,41 @@ public class PictureController {
 	@Authenticated
 	@PostMapping(consume = MediaTypes.FORM_DATA)
 	@ApiOperation(summary = "Upload a new picture.")
-	public Picture upload(
+	public PictureDto upload(
 		@FormData Part file,
 		@Principal User user
 	) {
 		try (final var inputStream = file.getInputStream()) {
 			final var bytes = inputStream.readAllBytes();
 			
-			return pictureService.upload(user, bytes);
+			final var picture = pictureService.upload(user, bytes);
+			return pictureMapper.toDto(picture);
 		}
 	}
 	
 	@GetMapping(path = "{id}")
 	@ApiOperation(summary = "Show a picture.")
-	public Picture show(
+	public PictureDto show(
 		@Variable long id
 	) {
-		return pictureService.find(id)
-			.orElseThrow(() -> new PictureNotFoundException(id));
+		final var picture = getPicture(id);
+		
+		return pictureMapper.toDto(picture);
 	}
 	
 	@PatchMapping(path = "{id}")
 	@ApiOperation(summary = "Update a picture.")
-	public Picture patch(
+	public PictureDto patch(
 		@Variable long id,
 		@Body @Valid PicturePatchForm form
 	) {
-		var picture = show(id);
+		final var picture = getPicture(id);
 		
 		if (Boolean.TRUE.equals(form.getIsDefault())) {
-			picture = pictureService.setDefault(picture);
+			pictureService.setDefault(picture);
 		}
-
-		return picture;
+		
+		return pictureMapper.toDto(picture);
 	}
 	
 	@GetMapping(path = "{id}/view", produce = MediaTypes.PNG)
@@ -106,7 +121,7 @@ public class PictureController {
 	public InputStream view(
 		@Variable long id
 	) {
-		final var picture = show(id);
+		final var picture = getPicture(id);
 		
 		return pictureService.read(picture);
 	}
@@ -119,13 +134,18 @@ public class PictureController {
 		@Variable long id,
 		@Principal User user
 	) {
-		final var picture = show(id);
+		final var picture = getPicture(id);
 		
 		if (picture.getUser().getId() != user.getId()) {
 			throw new InvalidPictureOwnerException(id);
 		}
 		
 		pictureService.delete(picture);
+	}
+	
+	public Picture getPicture(long id) {
+		return pictureService.find(id)
+			.orElseThrow(() -> new PictureNotFoundException(id));
 	}
 	
 }

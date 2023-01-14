@@ -18,7 +18,8 @@ public class UserDto {
 	private SexualOrientation sexualOrientation;
 	private long fame;
 	private boolean emailConfirmed;
-	
+
+	private PictureDto picture;
 	private RelationshipDto relationship;
 	
 }

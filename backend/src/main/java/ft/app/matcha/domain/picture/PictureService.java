@@ -19,11 +19,13 @@ import lombok.SneakyThrows;
 public class PictureService {
 	
 	private final PictureRepository repository;
+	private final DefaultPictureRepository defaultRepository;
 	private final long maxPictureCount;
 	private final String storage;
 	
-	public PictureService(PictureRepository repository, MatchaConfigurationProperties matchaConfigurationProperties) {
+	public PictureService(PictureRepository repository, DefaultPictureRepository defaultRepository, MatchaConfigurationProperties matchaConfigurationProperties) {
 		this.repository = repository;
+		this.defaultRepository = defaultRepository;
 		this.maxPictureCount = matchaConfigurationProperties.getMaximumPictureCount();
 		this.storage = matchaConfigurationProperties.getPictureStorage();
 	}
@@ -36,13 +38,20 @@ public class PictureService {
 		return repository.findById(id);
 	}
 	
-	public Picture setDefault(Picture picture) {
-		final var pictures = repository.findAllByUserAndIsDefaultTrue(picture.getUser());
-		pictures.forEach((picture_) -> picture_.setDefault(false));
-		repository.saveAll(pictures);
+	public Optional<DefaultPicture> getDefault(User user) {
+		return defaultRepository.findByUser(user);
+	}
+	
+	public DefaultPicture setDefault(Picture picture) {
+		final var user = picture.getUser();
 		
-		picture.setDefault(true);
-		return repository.save(picture);
+		final var default_ = defaultRepository
+			.findByUser(user)
+			.orElseGet(() -> new DefaultPicture().setUser(user))
+			.setPicture(picture)
+			.setSelectedAt(LocalDateTime.now());
+		
+		return defaultRepository.save(default_);
 	}
 	
 	public Picture upload(User user, byte[] bytes) {

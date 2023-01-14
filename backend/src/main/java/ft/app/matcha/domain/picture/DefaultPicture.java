@@ -9,9 +9,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import javax.persistence.UniqueConstraint;
 
 import ft.app.matcha.domain.user.User;
 import lombok.Data;
@@ -19,36 +17,27 @@ import lombok.experimental.Accessors;
 import lombok.experimental.FieldNameConstants;
 
 @Entity
-@Table
+@Table(name = "picture_defaults", uniqueConstraints = {
+	@UniqueConstraint(columnNames = {
+		DefaultPicture.Fields.user
+	})
+})
 @Data
 @Accessors(chain = true)
 @FieldNameConstants
-public class Picture {
-	
-	public static final int MAX_DESCRIPTION_LENGTH = 4000;
-	public static final int MAX_PATH_LENGTH = 2000;
+public class DefaultPicture {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
 	
 	@ManyToOne(optional = false)
-	@JsonIgnore
 	private User user;
 	
-	@Column(nullable = false, length = MAX_PATH_LENGTH)
-	@JsonIgnore
-	private String path;
-	
-	@Column(length = MAX_DESCRIPTION_LENGTH)
-	private String description;
+	@ManyToOne(optional = false)
+	private Picture picture;
 	
 	@Column(nullable = false)
-	@JsonFormat(shape = JsonFormat.Shape.STRING)
-	private LocalDateTime createdAt;
-	
-	public long getUserId() {
-		return user.getId();
-	}
+	private LocalDateTime selectedAt;
 	
 }

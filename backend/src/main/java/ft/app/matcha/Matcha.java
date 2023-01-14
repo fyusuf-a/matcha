@@ -23,6 +23,8 @@ import ft.app.matcha.domain.message.MessageService;
 import ft.app.matcha.domain.notification.Notification;
 import ft.app.matcha.domain.notification.NotificationRepository;
 import ft.app.matcha.domain.notification.NotificationService;
+import ft.app.matcha.domain.picture.DefaultPicture;
+import ft.app.matcha.domain.picture.DefaultPictureRepository;
 import ft.app.matcha.domain.picture.Picture;
 import ft.app.matcha.domain.picture.PictureRepository;
 import ft.app.matcha.domain.picture.PictureService;
@@ -54,6 +56,7 @@ import ft.app.matcha.web.TagController;
 import ft.app.matcha.web.UserController;
 import ft.app.matcha.web.UserTagController;
 import ft.app.matcha.web.WebSocketController;
+import ft.app.matcha.web.map.PictureMapper;
 import ft.app.matcha.web.map.ReportMapper;
 import ft.app.matcha.web.map.UserMapper;
 import ft.framework.convert.service.ConvertionService;
@@ -130,6 +133,7 @@ public class Matcha {
 				Relationship.class,
 				Token.class,
 				Picture.class,
+				DefaultPicture.class,
 				Tag.class,
 				UserTag.class,
 				Message.class,
@@ -146,6 +150,7 @@ public class Matcha {
 			final var notificationRepository = new NotificationRepository(ormConfiguration.getEntityManager());
 			final var tokenRepository = new TokenRepository(ormConfiguration.getEntityManager());
 			final var pictureRepository = new PictureRepository(ormConfiguration.getEntityManager());
+			final var defaultPictureRepository = new DefaultPictureRepository(ormConfiguration.getEntityManager());
 			final var tagRepository = new TagRepository(ormConfiguration.getEntityManager());
 			final var userTagRepository = new UserTagRepository(ormConfiguration.getEntityManager());
 			final var messageRepository = new MessageRepository(ormConfiguration.getEntityManager());
@@ -158,7 +163,7 @@ public class Matcha {
 			final var jwtService = new JwtService(userRepository, authConfiguration);
 			final var tokenService = new TokenService(tokenRepository, authConfiguration, eventPublisher);
 			final var authService = new AuthService(tokenService, userService, jwtService, emailSender, eventPublisher);
-			final var pictureService = new PictureService(pictureRepository, matchaConfiguration);
+			final var pictureService = new PictureService(pictureRepository, defaultPictureRepository, matchaConfiguration);
 			final var relationshipService = new RelationshipService(relationshipRepository, eventPublisher);
 			final var tagService = new TagService(tagRepository);
 			final var userTagService = new UserTagService(userTagRepository, matchaConfiguration);
@@ -188,14 +193,15 @@ public class Matcha {
 			final var scheduledFactory = new ScheduledFactory(taskScheduler);
 			services.forEach(scheduledFactory::scan);
 			
-			final var userMapper = new UserMapper(relationshipService);
+			final var pictureMapper = new PictureMapper(pictureService);
+			final var userMapper = new UserMapper(relationshipService, pictureService, pictureMapper);
 			final var reportMapper = new ReportMapper(userMapper);
 			
 			final var mvcConfiguration = configureMvc(objectMapper, validator, convertionService, jwtAuthenticator);
 			final var routeRegistry = new RouteRegistry(mvcConfiguration);
 			
 			routeRegistry.add(new AuthController(authService));
-			routeRegistry.add(new PictureController(userService, pictureService));
+			routeRegistry.add(new PictureController(userService, pictureService, pictureMapper));
 			routeRegistry.add(new UserController(userService, eventPublisher, userMapper));
 			routeRegistry.add(new LikeController(relationshipService, userService, userMapper));
 			routeRegistry.add(new TagController(tagService, userTagService));

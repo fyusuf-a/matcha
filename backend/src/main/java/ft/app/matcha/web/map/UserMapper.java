@@ -1,5 +1,7 @@
 package ft.app.matcha.web.map;
 
+import ft.app.matcha.domain.picture.DefaultPicture;
+import ft.app.matcha.domain.picture.PictureService;
 import ft.app.matcha.domain.relationship.RelationshipService;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.web.dto.RelationshipDto;
@@ -10,8 +12,15 @@ import lombok.RequiredArgsConstructor;
 public class UserMapper {
 	
 	private final RelationshipService relationshipService;
+	private final PictureService pictureService;
+	private final PictureMapper pictureMapper;
 	
 	public UserDto toDto(User user) {
+		final var picture = pictureService.getDefault(user)
+			.map(DefaultPicture::getPicture)
+			.map(pictureMapper::toDefaultDto)
+			.orElse(null);
+		
 		return new UserDto()
 			.setId(user.getId())
 			.setLogin(user.getLogin())
@@ -21,7 +30,8 @@ public class UserMapper {
 			.setGender(user.getGender())
 			.setSexualOrientation(user.getSexualOrientation())
 			.setFame(user.getFame())
-			.setEmailConfirmed(user.isEmailConfirmed());
+			.setEmailConfirmed(user.isEmailConfirmed())
+			.setPicture(picture);
 	}
 	
 	public UserDto toDto(User user, User principal) {
