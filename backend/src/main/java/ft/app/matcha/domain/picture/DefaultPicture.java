@@ -12,6 +12,7 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 import ft.app.matcha.domain.user.User;
+import ft.framework.orm.annotation.OnDelete;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.experimental.FieldNameConstants;
@@ -35,6 +36,7 @@ public class DefaultPicture {
 	private User user;
 	
 	@ManyToOne(optional = false)
+	@OnDelete(action = OnDelete.Action.CASCADE)
 	private Picture picture;
 	
 	@Column(nullable = false)
