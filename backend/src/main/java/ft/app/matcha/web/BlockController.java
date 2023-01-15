@@ -32,7 +32,7 @@ public class BlockController {
 	private final UserService userService;
 	private final UserMapper userMapper;
 	
-	@GetMapping(path = "blocking")
+	@GetMapping(path = "blocks")
 	@ApiOperation(summary = "List users that you blocked.")
 	public Page<UserDto> list(
 		Pageable pageable,
@@ -44,7 +44,7 @@ public class BlockController {
 			.map((relationship) -> userMapper.toDto(relationship.getPeer(), currentUser));
 	}
 	
-	@PostMapping(path = "blocking")
+	@PostMapping(path = "blocks")
 	@ApiOperation(summary = "Block a peer.")
 	public UserDto like(
 		@Body LikeForm form,
@@ -58,7 +58,7 @@ public class BlockController {
 	}
 	
 	@Authenticated
-	@DeleteMapping(path = "blocking/{peerId}")
+	@DeleteMapping(path = "blocks/{peerId}")
 	@ApiOperation(summary = "Unblock a peer.")
 	public void unlike(
 		@Variable long peerId,

@@ -47,7 +47,7 @@ public class LikeController {
 			.map((relationship) -> userMapper.toDto(relationship.getUser(), principal));
 	}
 	
-	@GetMapping(path = "{userId}/liking")
+	@GetMapping(path = "{userId}/likes")
 	@ApiOperation(summary = "List users that this user has liked.")
 	public Page<UserDto> list(
 		Pageable pageable,
@@ -62,7 +62,7 @@ public class LikeController {
 	}
 	
 	@Authenticated
-	@PostMapping(path = "@me/liking")
+	@PostMapping(path = "@me/likes")
 	@ApiOperation(summary = "Like a peer.")
 	public UserDto like(
 		@Body LikeForm form,
@@ -76,7 +76,7 @@ public class LikeController {
 	}
 	
 	@Authenticated
-	@DeleteMapping(path = "@me/liking/{peerId}")
+	@DeleteMapping(path = "@me/likes/{peerId}")
 	@ApiOperation(summary = "Unlike a peer.")
 	public void unlike(
 		@Variable long peerId,
