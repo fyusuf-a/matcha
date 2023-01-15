@@ -17,6 +17,7 @@ import ft.framework.mvc.annotation.Controller;
 import ft.framework.mvc.annotation.GetMapping;
 import ft.framework.mvc.annotation.PostMapping;
 import ft.framework.mvc.annotation.Principal;
+import ft.framework.mvc.annotation.Query;
 import ft.framework.mvc.annotation.RequestMapping;
 import ft.framework.swagger.annotation.ApiOperation;
 import ft.framework.validation.annotation.Valid;
@@ -119,6 +120,25 @@ public class AuthController {
 		@Body @Valid ResetPasswordForm form
 	) {
 		authService.resetPassword(form.getToken(), form.getPassword());
+	}
+	
+	@GetMapping(path = "/oauth/url")
+	@ApiOperation(summary = "Get the OAuth's authorize url.")
+	public String oauthUrl() {
+		return authService.getOAuthUrl();
+	}
+	
+	@GetMapping(path = "/oauth/callback")
+	@ApiOperation(summary = "Validate the OAuth's code.")
+	public Tokens oauthCallback(
+		@Query String code,
+		Response response
+	) {
+		final var tokens = authService.validateOAuthCode(code);
+		
+		JwtCookieAuthenticationFilter.addCookiesToResponse(tokens, response);
+		
+		return tokens;
 	}
 	
 }

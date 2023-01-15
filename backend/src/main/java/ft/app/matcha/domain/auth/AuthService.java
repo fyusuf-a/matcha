@@ -2,14 +2,19 @@ package ft.app.matcha.domain.auth;
 
 import java.time.LocalDateTime;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ft.app.matcha.domain.auth.event.RegisterEvent;
 import ft.app.matcha.domain.auth.exception.InvalidTokenException;
 import ft.app.matcha.domain.auth.exception.WrongLoginOrPasswordException;
+import ft.app.matcha.domain.picture.PictureService;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserService;
 import ft.framework.event.ApplicationEventPublisher;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RequiredArgsConstructor
 public class AuthService {
 	
@@ -17,6 +22,8 @@ public class AuthService {
 	private final UserService userService;
 	private final JwtService jwtService;
 	private final EmailSender emailSender;
+	private final OAuthService oAuthService;
+	private final PictureService pictureService;
 	private final ApplicationEventPublisher eventPublisher;
 	
 	public Tokens login(String login, String password) {
@@ -29,7 +36,7 @@ public class AuthService {
 	
 	public Tokens register(String firstName, String lastName, String email, String login, String password) {
 		final var encoded = encode(password);
-		final var user = userService.create(firstName, lastName, email, login, encoded);
+		final var user = userService.create(firstName, lastName, email, login, encoded, false);
 		
 		eventPublisher.publishEvent(new RegisterEvent(this, user));
 		
@@ -72,6 +79,37 @@ public class AuthService {
 		
 		final var encoded = encode(password);
 		userService.save(user.setPassword(encoded));
+	}
+	
+	public String getOAuthUrl() {
+		return oAuthService.getAuthorizeUrl();
+	}
+	
+	public Tokens validateOAuthCode(String code) {
+		final var idToken = oAuthService.getIdToken(code);
+		final var oauthUser = oAuthService.getUser(idToken);
+
+		final var optional = userService.find(oauthUser.email());
+		if (optional.isPresent()) {
+			return createTokens(optional.get());
+		}
+		
+		final var login = oauthUser.email().split("@")[0];
+		final var user = userService.create(oauthUser.firstName(), oauthUser.lastName(), oauthUser.email(), login, null, true);
+		
+		final var pictureUrl = oauthUser.pictureUrl();
+		if (StringUtils.isNotBlank(pictureUrl)) {
+			try {
+				final var picture = pictureService.upload(user, pictureUrl);
+				pictureService.setDefault(picture);
+			} catch (Exception exception) {
+				log.warn("Could not download oauth picture", exception);
+			}
+		}
+		
+		eventPublisher.publishEvent(new RegisterEvent(this, user));
+		
+		return createTokens(user);
 	}
 	
 	private Tokens createTokens(User user) {

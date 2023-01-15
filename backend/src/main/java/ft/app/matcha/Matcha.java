@@ -14,6 +14,7 @@ import ft.app.matcha.configuration.MatchaConfigurationProperties;
 import ft.app.matcha.domain.auth.AuthService;
 import ft.app.matcha.domain.auth.EmailSender;
 import ft.app.matcha.domain.auth.JwtService;
+import ft.app.matcha.domain.auth.OAuthService;
 import ft.app.matcha.domain.auth.Token;
 import ft.app.matcha.domain.auth.TokenRepository;
 import ft.app.matcha.domain.auth.TokenService;
@@ -99,6 +100,7 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
 
 @Slf4j
 public class Matcha {
@@ -114,6 +116,9 @@ public class Matcha {
 			final var objectMapper = new ObjectMapper()
 				.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
 				.registerModule(new JavaTimeModule());
+			
+			final var httpClient = new OkHttpClient.Builder()
+				.build();
 			
 			final var validator = new Validator();
 			final var convertionService = new SimpleConvertionService();
@@ -164,8 +169,9 @@ public class Matcha {
 			final var userService = new UserService(userRepository, matchaConfiguration);
 			final var jwtService = new JwtService(userRepository, authConfiguration);
 			final var tokenService = new TokenService(tokenRepository, authConfiguration, eventPublisher);
-			final var authService = new AuthService(tokenService, userService, jwtService, emailSender, eventPublisher);
-			final var pictureService = new PictureService(pictureRepository, defaultPictureRepository, matchaConfiguration);
+			final var pictureService = new PictureService(pictureRepository, defaultPictureRepository, httpClient, matchaConfiguration);
+			final var oAuthService = new OAuthService(objectMapper, httpClient, authConfiguration);
+			final var authService = new AuthService(tokenService, userService, jwtService, emailSender, oAuthService, pictureService, eventPublisher);
 			final var relationshipService = new RelationshipService(relationshipRepository, eventPublisher);
 			final var tagService = new TagService(tagRepository);
 			final var userTagService = new UserTagService(userTagRepository, matchaConfiguration);

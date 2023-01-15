@@ -35,7 +35,7 @@ public class User {
 	@Column(nullable = false, unique = true)
 	private String login;
 	
-	@Column(nullable = false)
+	@Column
 	@JsonIgnore
 	private String password;
 	

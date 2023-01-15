@@ -1,5 +1,6 @@
 package ft.app.matcha.domain.user;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import ft.app.matcha.configuration.MatchaConfigurationProperties;
@@ -29,7 +30,7 @@ public class UserService {
 		);
 	}
 	
-	public User create(String firstName, String lastName, String email, String login, String password) {
+	public User create(String firstName, String lastName, String email, String login, String password, boolean emailConfirmed) {
 		try {
 			return repository.save(new User()
 				.setFirstName(firstName)
@@ -37,6 +38,8 @@ public class UserService {
 				.setEmail(email)
 				.setLogin(login)
 				.setPassword(password)
+				.setEmailConfirmed(emailConfirmed)
+				.setEmailConfirmedAt(emailConfirmed ? LocalDateTime.now() : null)
 			);
 		} catch (DuplicateValueException exception) {
 			throw new LoginAlreadyTakenException(login);
