@@ -10,20 +10,28 @@ import {
   useRoute,
   useRouter,
 } from '@nuxtjs/composition-api'
+import { extractMessage } from '~/composables'
+import { useAuthStore } from '~/store'
 export default defineComponent({
   setup() {
-    const { $axios } = useContext()
+    const { $axios, $dialog } = useContext()
     const route = useRoute()
     const router = useRouter()
+    const authStore = useAuthStore()
 
     useFetch(async () => {
-      await $axios
-        .$get('/api/auth/oauth/callback', {
+      try {
+        await $axios.$get('/api/auth/oauth/callback', {
           params: {
             code: route.value.query.code,
           },
         })
-        .catch(console.log)
+
+        await authStore.fetchUser()
+      } catch (error) {
+        const message = extractMessage(error)
+        $dialog.notify.error(message)
+      }
 
       router.replace('/')
     })
