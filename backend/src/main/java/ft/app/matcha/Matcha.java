@@ -43,8 +43,9 @@ import ft.app.matcha.domain.tag.UserTagService;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserRepository;
 import ft.app.matcha.domain.user.UserService;
-import ft.app.matcha.security.JwtAuthenticationFilter;
-import ft.app.matcha.security.JwtAuthenticator;
+import ft.app.matcha.security.jwt.JwtAuthenticator;
+import ft.app.matcha.security.jwt.JwtCookieAuthenticationFilter;
+import ft.app.matcha.security.jwt.JwtHeaderAuthenticationFilter;
 import ft.app.matcha.web.AuthController;
 import ft.app.matcha.web.BlockController;
 import ft.app.matcha.web.LikeController;
@@ -77,6 +78,7 @@ import ft.framework.mvc.resolver.argument.impl.QueryHandlerMethodArgumentResolve
 import ft.framework.mvc.resolver.argument.impl.RequestHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.ResponseHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.VariableHandlerMethodArgumentResolver;
+import ft.framework.mvc.security.CompositeAuthenticationFilter;
 import ft.framework.orm.EntityManager;
 import ft.framework.orm.OrmConfiguration;
 import ft.framework.orm.dialect.MySQLDialect;
@@ -197,7 +199,7 @@ public class Matcha {
 			final var userMapper = new UserMapper(relationshipService, pictureService, pictureMapper);
 			final var reportMapper = new ReportMapper(userMapper);
 			
-			final var mvcConfiguration = configureMvc(objectMapper, validator, convertionService, jwtAuthenticator);
+			final var mvcConfiguration = configureMvc(objectMapper, validator, convertionService, jwtAuthenticator, authService);
 			final var routeRegistry = new RouteRegistry(mvcConfiguration);
 			
 			routeRegistry.add(new AuthController(authService));
@@ -265,7 +267,7 @@ public class Matcha {
 	}
 	
 	@SneakyThrows
-	public static MvcConfiguration configureMvc(ObjectMapper objectMapper, Validator validator, ConvertionService conversionService, JwtAuthenticator jwtAuthenticator) {
+	public static MvcConfiguration configureMvc(ObjectMapper objectMapper, Validator validator, ConvertionService conversionService, JwtAuthenticator jwtAuthenticator, AuthService authService) {
 		log.info("Waking up");
 		
 		return MvcConfiguration.builder()
@@ -287,7 +289,10 @@ public class Matcha {
 				new PrincipalHandlerMethodArgumentResolver(),
 				new FormDataHandlerMethodArgumentResolver(),
 				new BodyHandlerMethodArgumentResolver(objectMapper)))
-			.filter(new JwtAuthenticationFilter(jwtAuthenticator))
+			.filter(CompositeAuthenticationFilter.builder()
+				.filter(new JwtHeaderAuthenticationFilter(jwtAuthenticator))
+				.filter(new JwtCookieAuthenticationFilter(jwtAuthenticator, authService))
+				.build())
 			.filter(new LoggingFilter())
 			.build();
 	}

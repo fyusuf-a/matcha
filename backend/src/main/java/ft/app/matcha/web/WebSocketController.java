@@ -1,16 +1,19 @@
 package ft.app.matcha.web;
 
+import java.net.HttpCookie;
+
+import org.apache.commons.lang3.StringUtils;
+
 import ft.app.matcha.domain.message.event.MessageCreatedEvent;
 import ft.app.matcha.domain.notification.event.NotificationCreatedEvent;
 import ft.app.matcha.domain.user.User;
-import ft.app.matcha.security.JwtAuthenticator;
-import ft.app.matcha.web.dto.AuthenticatePayload;
+import ft.app.matcha.security.jwt.JwtAuthenticator;
+import ft.app.matcha.security.jwt.JwtCookieAuthenticationFilter;
 import ft.framework.event.annotation.EventListener;
 import ft.framework.websocket.WebSocketHandler;
 
 public class WebSocketController {
 	
-	public static final String AUTHENTICATE_EVENT = "authenticate";
 	public static final String MESSAGE_CREATED_EVENT = "message.created";
 	public static final String NOTIFICATION_CREATED_EVENT = "notification.created";
 	
@@ -19,18 +22,29 @@ public class WebSocketController {
 	public WebSocketController(WebSocketHandler webSocket, JwtAuthenticator jwtAuthenticator) {
 		this.webSocket = webSocket;
 		
-		webSocket.addPacketListener(AUTHENTICATE_EVENT, AuthenticatePayload.class, (connection, payload) -> {
-			final var authentication = jwtAuthenticator.authenticateToken(payload.getAccessToken());
-			
-			if (authentication != null) {
-				connection.setAuthentication(authentication);
+		webSocket.setConnectListener((connection) -> {
+			try {
+				final var accessToken = connection.getCookie(JwtCookieAuthenticationFilter.ACCESS_TOKEN_COOKIE)
+					.map(HttpCookie::getValue)
+					.orElse(null);
 				
-				if (authentication.getPrincipal() instanceof User user) {
-					connection.join(toUserRoom(user));
+				if (StringUtils.isNotBlank(accessToken)) {
+					final var authentication = jwtAuthenticator.authenticate(accessToken);
+					
+					if (authentication != null) {
+						connection.setAuthentication(authentication);
+						
+						if (authentication.getPrincipal() instanceof User user) {
+							connection.join(toUserRoom(user));
+						}
+						
+						return true;
+					}
 				}
+			} catch (Exception exception) {
 			}
 			
-			connection.emit(AUTHENTICATE_EVENT, authentication.getPrincipal());
+			return false;
 		});
 	}
 	

@@ -1,5 +1,8 @@
 package ft.app.matcha.domain.auth;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import ft.app.matcha.domain.user.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,7 +12,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Tokens {
 	
-	public String accessToken;
-	public String refreshToken;
+	@JsonIgnore
+	private User user;
+	
+	private String accessToken;
+	private String refreshToken;
 	
 }

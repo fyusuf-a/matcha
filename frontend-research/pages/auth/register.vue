@@ -49,18 +49,15 @@
 import {
   computed,
   defineComponent,
-  onMounted,
   reactive,
   ref,
   unref,
   useContext,
   useRoute,
   useRouter,
-  watch,
 } from '@nuxtjs/composition-api'
 import { extractMessage } from '~/composables'
 import { extractValidation } from '~/utils'
-import { Tokens } from '~/models'
 import { useAuthStore } from '~/store'
 export default defineComponent({
   setup() {
@@ -86,20 +83,15 @@ export default defineComponent({
       validations.value = extractValidation(null)
 
       try {
-        const { accessToken, refreshToken }: Tokens = await $axios.$post(
-          `/api/auth/register`,
-          unref(inputs)
-        )
-
-        authStore.updateTokens(accessToken, refreshToken)
+        await $axios.$post(`/api/auth/register`, unref(inputs))
 
         await authStore.fetchUser()
 
         router.push({
           path: '/auth/verify',
           query: {
-            from: from.value
-          }
+            from: from.value,
+          },
         })
       } catch (error) {
         const message = extractMessage(error)

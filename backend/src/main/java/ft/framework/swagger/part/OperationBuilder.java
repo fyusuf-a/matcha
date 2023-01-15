@@ -41,6 +41,11 @@ public class OperationBuilder {
 			if (StringUtils.isNotBlank(summary)) {
 				operation.setSummary(summary);
 			}
+
+			final var description = annotation.description();
+			if (StringUtils.isNotBlank(description)) {
+				operation.setDescription(description);
+			}
 		}
 		
 		for (final var parameter : route.getParameters()) {

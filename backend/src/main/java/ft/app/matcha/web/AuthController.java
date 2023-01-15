@@ -3,6 +3,7 @@ package ft.app.matcha.web;
 import ft.app.matcha.domain.auth.AuthService;
 import ft.app.matcha.domain.auth.Tokens;
 import ft.app.matcha.domain.user.User;
+import ft.app.matcha.security.jwt.JwtCookieAuthenticationFilter;
 import ft.app.matcha.web.form.ConfirmForm;
 import ft.app.matcha.web.form.ForgotForm;
 import ft.app.matcha.web.form.LoginForm;
@@ -20,6 +21,9 @@ import ft.framework.mvc.annotation.RequestMapping;
 import ft.framework.swagger.annotation.ApiOperation;
 import ft.framework.validation.annotation.Valid;
 import lombok.RequiredArgsConstructor;
+import spark.Request;
+import spark.Response;
+import spark.utils.StringUtils;
 
 @RequiredArgsConstructor
 @Controller
@@ -38,35 +42,59 @@ public class AuthController {
 	}
 	
 	@PostMapping(path = "/login")
-	@ApiOperation(summary = "Login with an email and a password.")
+	@ApiOperation(summary = "Login with an email and a password.", description = "The tokens will also be added to the cookies.")
 	public Tokens login(
-		@Body @Valid LoginForm form
+		@Body @Valid LoginForm form,
+		Response response
 	) {
-		return authService.login(form.getLogin(), form.getPassword());
+		final var tokens = authService.login(form.getLogin(), form.getPassword());
+		
+		JwtCookieAuthenticationFilter.addCookiesToResponse(tokens, response);
+		
+		return tokens;
 	}
 	
 	@PostMapping(path = "/register")
-	@ApiOperation(summary = "Create an account.")
+	@ApiOperation(summary = "Create an account.", description = "The tokens will also be added to the cookies.")
 	public Tokens register(
-		@Body @Valid RegisterForm form
+		@Body @Valid RegisterForm form,
+		Response response
 	) {
-		return authService.register(form.getFirstName(), form.getLastName(), form.getEmail(), form.getLogin(), form.getPassword());
+		final var tokens = authService.register(form.getFirstName(), form.getLastName(), form.getEmail(), form.getLogin(), form.getPassword());
+		
+		JwtCookieAuthenticationFilter.addCookiesToResponse(tokens, response);
+		
+		return tokens;
 	}
 	
 	@PostMapping(path = "/refresh")
-	@ApiOperation(summary = "Refresh a JWT token using a refresh-token.")
+	@ApiOperation(summary = "Refresh a JWT token using a refresh-token.", description = "This endpoint does not affect the cookies.")
 	public Tokens refresh(
-		@Body @Valid RefreshForm form
+		@Body @Valid RefreshForm form,
+		Response response
 	) {
 		return authService.refresh(form.getRefreshToken());
 	}
 	
 	@PostMapping(path = "/logout")
-	@ApiOperation(summary = "Logout and invalidate a refresh-token.")
+	@ApiOperation(summary = "Logout and invalidate a refresh-token.", description = "If a token is provided in the body, this token will be invalidated, else the one present in the cookies will.")
 	public void logout(
-		@Body @Valid LogoutForm form
+		@Body @Valid LogoutForm form,
+		Request request,
+		Response response
 	) {
-		authService.logout(form.getRefreshToken());
+		var refreshToken = form.getRefreshToken();
+		if (StringUtils.isNotBlank(refreshToken)) {
+			authService.logout(refreshToken);
+			return;
+		}
+		
+		refreshToken = request.cookie(JwtCookieAuthenticationFilter.REFRESH_TOKEN_COOKIE);
+		JwtCookieAuthenticationFilter.removeCookiesFromResponse(response);
+		
+		if (StringUtils.isNotBlank(refreshToken)) {
+			authService.logout(refreshToken);
+		}
 	}
 	
 	@PostMapping(path = "/confirm")

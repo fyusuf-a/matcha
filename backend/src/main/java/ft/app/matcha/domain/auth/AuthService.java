@@ -78,7 +78,7 @@ public class AuthService {
 		final var token = tokenService.create(Token.Type.REFRESH, user);
 		final var accessToken = jwtService.generate(token.getUser());
 		
-		return new Tokens(accessToken, token.getPlain());
+		return new Tokens(user, accessToken, token.getPlain());
 	}
 	
 	public static String encode(String password) {

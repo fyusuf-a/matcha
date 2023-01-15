@@ -35,9 +35,9 @@ export const useSocketStore = defineStore('socket', {
         },
         connect() {
             const authStore = useAuthStore()
-            const accessToken = authStore.tokens?.accessToken
+            const user = authStore.user
 
-            if (!accessToken) {
+            if (!user) {
                 return false
             }
 
@@ -48,10 +48,6 @@ export const useSocketStore = defineStore('socket', {
             const socket = new WebSocket(url)
 
             socket.onopen = () => {
-                this.emit('authenticate', {
-                    accessToken,
-                })
-
                 this.connected = true
             }
 

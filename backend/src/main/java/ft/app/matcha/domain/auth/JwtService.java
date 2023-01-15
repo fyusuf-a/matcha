@@ -5,7 +5,9 @@ import java.time.Duration;
 import java.util.Date;
 
 import ft.app.matcha.configuration.AuthConfigurationProperties;
-import ft.app.matcha.domain.auth.exception.JwtException;
+import ft.app.matcha.domain.auth.exception.JwtExpiredException;
+import ft.app.matcha.domain.auth.exception.JwtMalformedException;
+import ft.app.matcha.domain.auth.exception.JwtSignatureException;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserRepository;
 import io.jsonwebtoken.Claims;
@@ -49,18 +51,18 @@ public class JwtService {
 			
 			final var claims = (Claims) jwt.getBody();
 			if (isExpired(claims)) {
-				throw JwtException.expired();
+				throw new JwtExpiredException();
 			}
 			
 			final var subject = Long.parseLong(claims.getSubject());
 			
 			return userRepository.getById(subject);
 		} catch (SignatureException exception) {
-			throw JwtException.badSignature();
+			throw new JwtSignatureException(exception);
 		} catch (MalformedJwtException exception) {
-			throw JwtException.malformed();
+			throw new JwtMalformedException(exception);
 		} catch (ExpiredJwtException exception) {
-			throw JwtException.expired();
+			throw new JwtExpiredException(exception);
 		}
 	}
 	
