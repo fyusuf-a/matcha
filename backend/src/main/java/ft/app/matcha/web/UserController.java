@@ -78,15 +78,6 @@ public class UserController {
 	}
 	
 	@Authenticated
-	@GetMapping(path = "@me")
-	@ApiOperation(summary = "Show yourself.")
-	public User showMe(
-		@Principal User user
-	) {
-		return user;
-	}
-	
-	@Authenticated
 	@PatchMapping(path = "@me")
 	@ApiOperation(summary = "Update yourself.")
 	public User patchMe(
