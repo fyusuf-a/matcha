@@ -199,7 +199,7 @@ public class Matcha {
 			final var notificationService = new NotificationService(notificationRepository, relationshipService, eventPublisher);
 			final var visitService = new VisitService(visitRepository, eventPublisher);
 			final var ipLocationService = new IPLocationService(httpClient, heartbeatConfiguration);
-			final var heartbeatService = new HeartbeatService(heartbeatRepository, ipLocationService);
+			final var heartbeatService = new HeartbeatService(heartbeatRepository, ipLocationService, heartbeatConfiguration);
 			
 			final var services = Arrays.asList(new Object[] {
 				userService,
@@ -225,7 +225,7 @@ public class Matcha {
 			services.forEach(scheduledFactory::scan);
 			
 			final var pictureMapper = new PictureMapper(pictureService);
-			final var userMapper = new UserMapper(relationshipService, pictureService, pictureMapper);
+			final var userMapper = new UserMapper(relationshipService, pictureService, pictureMapper, heartbeatService);
 			final var reportMapper = new ReportMapper(userMapper);
 			final var visitMapper = new VisitMapper(userMapper);
 			

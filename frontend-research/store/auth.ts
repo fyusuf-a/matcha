@@ -38,11 +38,14 @@ export const useAuthStore = defineStore('auth', {
 
             await this.fetchUser().catch(console.log)
 
-            setInterval(() => {
+            const heartbeat = () => {
                 if (this.logged) {
                     axios.get(`/api/heartbeat/log`).catch(() => void 0)
                 }
-            }, 2 * 60_000)
+            }
+
+            setInterval(heartbeat, 2 * 60_000)
+            heartbeat();
         }
     },
 })

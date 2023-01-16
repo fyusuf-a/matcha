@@ -1,5 +1,6 @@
 package ft.app.matcha.web.dto;
 
+import ft.app.matcha.domain.heartbeat.Presence;
 import ft.app.matcha.domain.user.Gender;
 import ft.app.matcha.domain.user.SexualOrientation;
 import lombok.Data;
@@ -21,5 +22,6 @@ public class UserDto {
 
 	private PictureDto picture;
 	private RelationshipDto relationship;
+	private Presence presence;
 	
 }

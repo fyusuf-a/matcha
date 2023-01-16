@@ -83,6 +83,23 @@ public class Repository<T, ID> {
 		return page.getContent().stream().findFirst();
 	}
 	
+	// protected Optional<T> findLastBy(Predicate<T> predicate) {
+	// final var reverseId = new Sort(
+	// Sort.Order.builder()
+	// .descending()
+	// .property(entity.getTable()
+	// .getIdColumn()
+	// .getField()
+	// .getName())
+	// .build()
+	// );
+	//
+	// final var pageable = new Pageable(1, 0, reverseId);
+	// final var page = entityManager.findAllBy(entity, predicate, pageable);
+	//
+	// return page.getContent().stream().findFirst();
+	// }
+	
 	protected List<T> findAllBy(Predicate<T> predicate) {
 		return entityManager.findAllBy(entity, predicate);
 	}

@@ -9,6 +9,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -19,7 +20,11 @@ import lombok.experimental.Accessors;
 import lombok.experimental.FieldNameConstants;
 
 @Entity
-@Table
+@Table(uniqueConstraints = {
+	@UniqueConstraint(columnNames = {
+		Heartbeat.Fields.user
+	})
+})
 @Data
 @Accessors(chain = true)
 @FieldNameConstants
@@ -51,6 +56,10 @@ public class Heartbeat {
 	@Column(nullable = false)
 	@JsonFormat(shape = JsonFormat.Shape.STRING)
 	private LocalDateTime createdAt;
+	
+	@Column(nullable = false)
+	@JsonFormat(shape = JsonFormat.Shape.STRING)
+	private LocalDateTime updatedAt;
 	
 	public long getUserId() {
 		return user.getId();

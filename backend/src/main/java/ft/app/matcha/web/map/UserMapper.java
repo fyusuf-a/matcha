@@ -1,5 +1,6 @@
 package ft.app.matcha.web.map;
 
+import ft.app.matcha.domain.heartbeat.HeartbeatService;
 import ft.app.matcha.domain.picture.DefaultPicture;
 import ft.app.matcha.domain.picture.PictureService;
 import ft.app.matcha.domain.relationship.RelationshipService;
@@ -14,12 +15,15 @@ public class UserMapper {
 	private final RelationshipService relationshipService;
 	private final PictureService pictureService;
 	private final PictureMapper pictureMapper;
+	private final HeartbeatService heartbeatService;
 	
 	public UserDto toDto(User user) {
 		final var picture = pictureService.getDefault(user)
 			.map(DefaultPicture::getPicture)
 			.map(pictureMapper::toDefaultDto)
 			.orElse(null);
+		
+		final var presence = heartbeatService.getPresence(user);
 		
 		return new UserDto()
 			.setId(user.getId())
@@ -31,7 +35,8 @@ public class UserMapper {
 			.setSexualOrientation(user.getSexualOrientation())
 			.setFame(user.getFame())
 			.setEmailConfirmed(user.isEmailConfirmed())
-			.setPicture(picture);
+			.setPicture(picture)
+			.setPresence(presence);
 	}
 	
 	public UserDto toDto(User user, User principal) {
