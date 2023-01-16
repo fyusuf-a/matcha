@@ -2,6 +2,7 @@ package ft.app.matcha.configuration;
 
 import ft.framework.property.annotation.ConfigurationProperties;
 import ft.framework.validation.annotation.Valid;
+import ft.framework.validation.constraint.annotation.NotBlank;
 import lombok.Data;
 
 @Valid
@@ -10,7 +11,8 @@ import lombok.Data;
 public class MatchaConfigurationProperties {
 	
 	private long maximumPictureCount = 5;
-	private String pictureStorage = "./pictures/";
+	@NotBlank
+	private String pictureStorage = "./data/pictures/";
 	
 	private long maximumTagCount = 5;
 	

@@ -37,6 +37,12 @@ export const useAuthStore = defineStore('auth', {
             this.initialized = true
 
             await this.fetchUser().catch(console.log)
+
+            setInterval(() => {
+                if (this.logged) {
+                    axios.get(`/api/heartbeat/log`).catch(() => void 0)
+                }
+            }, 2 * 60_000)
         }
     },
 })

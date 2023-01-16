@@ -10,6 +10,7 @@ import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import ft.app.matcha.configuration.AuthConfigurationProperties;
 import ft.app.matcha.configuration.DatabaseConfigurationProperties;
 import ft.app.matcha.configuration.EmailConfigurationProperties;
+import ft.app.matcha.configuration.HeartbeatConfigurationProperties;
 import ft.app.matcha.configuration.MatchaConfigurationProperties;
 import ft.app.matcha.domain.auth.AuthService;
 import ft.app.matcha.domain.auth.EmailSender;
@@ -18,6 +19,10 @@ import ft.app.matcha.domain.auth.OAuthService;
 import ft.app.matcha.domain.auth.Token;
 import ft.app.matcha.domain.auth.TokenRepository;
 import ft.app.matcha.domain.auth.TokenService;
+import ft.app.matcha.domain.heartbeat.Heartbeat;
+import ft.app.matcha.domain.heartbeat.HeartbeatRepository;
+import ft.app.matcha.domain.heartbeat.HeartbeatService;
+import ft.app.matcha.domain.heartbeat.IPLocationService;
 import ft.app.matcha.domain.message.Message;
 import ft.app.matcha.domain.message.MessageRepository;
 import ft.app.matcha.domain.message.MessageService;
@@ -52,6 +57,7 @@ import ft.app.matcha.security.jwt.JwtCookieAuthenticationFilter;
 import ft.app.matcha.security.jwt.JwtHeaderAuthenticationFilter;
 import ft.app.matcha.web.AuthController;
 import ft.app.matcha.web.BlockController;
+import ft.app.matcha.web.HeartbeatController;
 import ft.app.matcha.web.LikeController;
 import ft.app.matcha.web.MessageController;
 import ft.app.matcha.web.NotificationController;
@@ -78,6 +84,7 @@ import ft.framework.mvc.mapping.RouteRegistry;
 import ft.framework.mvc.resolver.argument.impl.AuthenticationHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.BodyHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.FormDataHandlerMethodArgumentResolver;
+import ft.framework.mvc.resolver.argument.impl.InetAddressHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.PageableHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.PrincipalHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.QueryHandlerMethodArgumentResolver;
@@ -138,6 +145,7 @@ public class Matcha {
 			final var authConfiguration = propertyBinder.bind(new AuthConfigurationProperties());
 			final var emailConfiguration = propertyBinder.bind(new EmailConfigurationProperties());
 			final var matchaConfiguration = propertyBinder.bind(new MatchaConfigurationProperties());
+			final var heartbeatConfiguration = propertyBinder.bind(new HeartbeatConfigurationProperties());
 			
 			final var ormConfiguration = configureOrm(databaseConfiguration, new Class<?>[] {
 				User.class,
@@ -152,6 +160,7 @@ public class Matcha {
 				Report.class,
 				Relationship.class,
 				Visit.class,
+				Heartbeat.class,
 			});
 			
 			final var webSocket = WebSocketHandler.create(objectMapper);
@@ -170,6 +179,7 @@ public class Matcha {
 			final var reportRepository = new ReportRepository(ormConfiguration.getEntityManager());
 			final var relationshipRepository = new RelationshipRepository(ormConfiguration.getEntityManager());
 			final var visitRepository = new VisitRepository(ormConfiguration.getEntityManager());
+			final var heartbeatRepository = new HeartbeatRepository(ormConfiguration.getEntityManager());
 			
 			final var emailSender = new EmailSender(emailConfiguration);
 			
@@ -188,6 +198,8 @@ public class Matcha {
 			final var reportService = new ReportService(reportRepository, eventPublisher);
 			final var notificationService = new NotificationService(notificationRepository, relationshipService, eventPublisher);
 			final var visitService = new VisitService(visitRepository, eventPublisher);
+			final var ipLocationService = new IPLocationService(httpClient, heartbeatConfiguration);
+			final var heartbeatService = new HeartbeatService(heartbeatRepository, ipLocationService);
 			
 			final var services = Arrays.asList(new Object[] {
 				userService,
@@ -202,6 +214,8 @@ public class Matcha {
 				reportService,
 				relationshipService,
 				visitService,
+				ipLocationService,
+				heartbeatService,
 			});
 			
 			final var eventListenerFactory = new EventListenerFactory(eventPublisher);
@@ -229,6 +243,7 @@ public class Matcha {
 			routeRegistry.add(new ReportController(reportService, userService, reportMapper));
 			routeRegistry.add(new BlockController(relationshipService, userService, userMapper));
 			routeRegistry.add(new VisitController(visitService, userService, visitMapper));
+			routeRegistry.add(new HeartbeatController(heartbeatService));
 			
 			final var swagger = new OpenAPI()
 				.schemaRequirement("JWT", new SecurityScheme()
@@ -305,6 +320,7 @@ public class Matcha {
 				new AuthenticationHandlerMethodArgumentResolver(),
 				new PrincipalHandlerMethodArgumentResolver(),
 				new FormDataHandlerMethodArgumentResolver(),
+				new InetAddressHandlerMethodArgumentResolver(),
 				new BodyHandlerMethodArgumentResolver(objectMapper)))
 			.filter(CompositeAuthenticationFilter.builder()
 				.filter(new JwtHeaderAuthenticationFilter(jwtAuthenticator))
