@@ -37,6 +37,8 @@ services:
       AUTH_REFRESH_TOKEN_EXPIRATION: P3D
       MAIL_AUTH_EMAIL: ${BACKEND_MAIL}
       MAIL_AUTH_PASSWORD: ${BACKEND_MAIL_PASSWORD}
+    volumes:
+      - backend-data:/app/data
     build:
       context: ./backend
       dockerfile: ${BACKEND_DOCKERFILE}
@@ -80,4 +82,5 @@ services:
     profiles: ["debug"]
 
 volumes:
+  backend-data:
   mysql-data:
