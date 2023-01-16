@@ -25,54 +25,47 @@ services:
     ports:
       - ${BACKEND_PORT}:4567
     environment:
-      DATABASE_HOST: db
+      DATABASE_HOST: mysql
       DATABASE_PORT: 3306
-      DATABASE_USER: ${DB_USER}
-      DATABASE_PASSWORD: ${DB_PASSWORD}
-      DATABASE_DATABASE: ${DB_DATABASE}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_AUTO_RECONNECT: 'true'
       AUTH_JWT_SECRET: ${BACKEND_JWT_SECRET}
       AUTH_JWT_EXPIRATION: PT15M
-      AUTH_REFRESH_TOKEN_LENGTH: ${BACKEND_TOKEN_LENGTH}
       AUTH_REFRESH_TOKEN_EXPIRATION: P3D
-      MAIL_HOST: ${BACKEND_MAIL_HOST}
-      MAIL_PORT: ${BACKEND_MAIL_PORT}
-      MAIL_AUTH: 'true'
-      MAIL_SSL: 'true'
-      MAIL_DEBUG: ${BACKEND_MAIL_DEBUG}
       MAIL_AUTH_EMAIL: ${BACKEND_MAIL}
       MAIL_AUTH_PASSWORD: ${BACKEND_MAIL_PASSWORD}
-      MAIL_SENDER: ${BACKEND_MAIL}
     build:
       context: ./backend
       dockerfile: ${BACKEND_DOCKERFILE}
     restart: unless-stopped
     depends_on:
-      - db
-  db:
+      - mysql
+  mysql:
     image: mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_HOST: localhost
       MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DATABASE_USER}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_DATABASE: ${DATABASE_NAME}
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./db/server.cnf:/etc/mysql/conf.d/server.cnf
-      - ./db/create_db.sql:/docker-entrypoint-initdb.d/create_db.sql
+      - ./database/server.cnf:/etc/mysql/conf.d/server.cnf
+      - ./database/create.sql:/docker-entrypoint-initdb.d/create.sql
   phpmyadmin:
     image: phpmyadmin
     restart: unless-stopped
     ports:
       - 8888:80
     environment:
-      PMA_HOST: db
-      PMA_USER: ${DB_USER}
-      PMA_PASSWORD: ${DB_PASSWORD}
+      PMA_HOST: mysql
+      PMA_USER: ${DATABASE_USER}
+      PMA_PASSWORD: ${DATABASE_PASSWORD}
     depends_on:
-      - db
+      - mysql
     profiles: ["debug"]
 
 volumes:
