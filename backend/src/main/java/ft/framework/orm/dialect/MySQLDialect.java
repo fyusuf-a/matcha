@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.sql.SQLType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -63,6 +64,7 @@ public class MySQLDialect implements Dialect {
 		simpleTypes.put(Float.class, MysqlType.FLOAT);
 		simpleTypes.put(LocalDate.class, MysqlType.DATE);
 		simpleTypes.put(LocalDateTime.class, MysqlType.DATETIME);
+		simpleTypes.put(LocalTime.class, MysqlType.TIME);
 		
 		branchToCode.put(Branch.Type.AND, "AND");
 		branchToCode.put(Branch.Type.OR, "OR");
@@ -93,7 +95,15 @@ public class MySQLDialect implements Dialect {
 		var matcher = DUPLICATE_VALUE_PATTERN.matcher(message);
 		if (matcher.find()) {
 			final var value = matcher.group(1);
-			final var constraint = findConstraintByName(table, matcher.group(2));
+			
+			var constraintName = matcher.group(2);
+			final var lastDotIndex = constraintName.lastIndexOf('.');
+			if (lastDotIndex != -1) {
+				constraintName = constraintName.substring(lastDotIndex + 1);
+			}
+			
+			System.out.println(constraintName);
+			final var constraint = findConstraintByName(table, constraintName);
 			
 			return new DuplicateValueException(value, constraint, exception);
 		}

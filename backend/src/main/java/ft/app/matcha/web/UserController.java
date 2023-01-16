@@ -4,19 +4,16 @@ import java.util.Optional;
 
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserService;
-import ft.app.matcha.domain.user.event.UserViewedEvent;
 import ft.app.matcha.domain.user.exception.UserNotFoundException;
 import ft.app.matcha.security.UserAuthentication;
 import ft.app.matcha.web.dto.UserDto;
 import ft.app.matcha.web.form.UserPatchForm;
 import ft.app.matcha.web.map.UserMapper;
-import ft.framework.event.ApplicationEventPublisher;
 import ft.framework.mvc.annotation.Authenticated;
 import ft.framework.mvc.annotation.Body;
 import ft.framework.mvc.annotation.Controller;
 import ft.framework.mvc.annotation.GetMapping;
 import ft.framework.mvc.annotation.PatchMapping;
-import ft.framework.mvc.annotation.PostMapping;
 import ft.framework.mvc.annotation.Principal;
 import ft.framework.mvc.annotation.RequestMapping;
 import ft.framework.mvc.annotation.Variable;
@@ -33,7 +30,6 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 	
 	private final UserService userService;
-	private final ApplicationEventPublisher eventPublisher;
 	private final UserMapper userMapper;
 	
 	@GetMapping
@@ -60,21 +56,6 @@ public class UserController {
 		return userService.find(id)
 			.map((user) -> userMapper.toDto(user, principal))
 			.orElseThrow(() -> new UserNotFoundException(id));
-	}
-	
-	@Authenticated
-	@PostMapping(path = "{id}/view")
-	@ApiOperation(summary = "Trigger a 'view' notification.")
-	public void view(
-		@Variable long id,
-		@Principal User currentUser
-	) {
-		final var user = userService.find(id)
-			.orElseThrow(() -> new UserNotFoundException(id));
-		
-		if (user.getId() != currentUser.getId()) {
-			eventPublisher.publishEvent(new UserViewedEvent(this, user, currentUser));
-		}
 	}
 	
 	@Authenticated

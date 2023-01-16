@@ -8,11 +8,13 @@ import ft.app.matcha.domain.relationship.event.BlockedEvent;
 import ft.app.matcha.domain.relationship.event.LikedEvent;
 import ft.app.matcha.domain.relationship.event.UnlikedEvent;
 import ft.app.matcha.domain.report.event.ReportedEvent;
+import ft.app.matcha.domain.user.exception.EmailAlreadyUsedException;
 import ft.app.matcha.domain.user.exception.LoginAlreadyTakenException;
 import ft.framework.event.annotation.EventListener;
 import ft.framework.mvc.domain.Page;
 import ft.framework.mvc.domain.Pageable;
 import ft.framework.orm.error.DuplicateValueException;
+import ft.framework.orm.mapping.contraint.Constraint;
 
 public class UserService {
 	
@@ -42,6 +44,12 @@ public class UserService {
 				.setEmailConfirmedAt(emailConfirmed ? LocalDateTime.now() : null)
 			);
 		} catch (DuplicateValueException exception) {
+			final var unique = Optional.ofNullable(exception.getConstraint()).map(Constraint::getName).orElse("");
+			
+			if (unique.contains(User.Fields.email)) {
+				throw new EmailAlreadyUsedException(email);
+			}
+			
 			throw new LoginAlreadyTakenException(login);
 		}
 	}

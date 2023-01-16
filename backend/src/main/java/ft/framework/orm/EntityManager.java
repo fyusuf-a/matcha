@@ -404,7 +404,9 @@ public class EntityManager {
 			if (column instanceof ManyToOne manyToOne) {
 				final Entity target = manyToOne.getTarget();
 				
-				value = convert(target, target.instantiate(value), true);
+				if (value != null) {
+					value = convert(target, target.instantiate(value), true);
+				}
 			}
 			
 			column.write(instance, value);

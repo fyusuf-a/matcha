@@ -44,6 +44,9 @@ import ft.app.matcha.domain.tag.UserTagService;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserRepository;
 import ft.app.matcha.domain.user.UserService;
+import ft.app.matcha.domain.visit.Visit;
+import ft.app.matcha.domain.visit.VisitRepository;
+import ft.app.matcha.domain.visit.VisitService;
 import ft.app.matcha.security.jwt.JwtAuthenticator;
 import ft.app.matcha.security.jwt.JwtCookieAuthenticationFilter;
 import ft.app.matcha.security.jwt.JwtHeaderAuthenticationFilter;
@@ -57,10 +60,12 @@ import ft.app.matcha.web.ReportController;
 import ft.app.matcha.web.TagController;
 import ft.app.matcha.web.UserController;
 import ft.app.matcha.web.UserTagController;
+import ft.app.matcha.web.VisitController;
 import ft.app.matcha.web.WebSocketController;
 import ft.app.matcha.web.map.PictureMapper;
 import ft.app.matcha.web.map.ReportMapper;
 import ft.app.matcha.web.map.UserMapper;
+import ft.app.matcha.web.map.VisitMapper;
 import ft.framework.convert.service.ConvertionService;
 import ft.framework.convert.service.SimpleConvertionService;
 import ft.framework.event.ApplicationEventPublisher;
@@ -146,6 +151,7 @@ public class Matcha {
 				Message.class,
 				Report.class,
 				Relationship.class,
+				Visit.class,
 			});
 			
 			final var webSocket = WebSocketHandler.create(objectMapper);
@@ -163,6 +169,7 @@ public class Matcha {
 			final var messageRepository = new MessageRepository(ormConfiguration.getEntityManager());
 			final var reportRepository = new ReportRepository(ormConfiguration.getEntityManager());
 			final var relationshipRepository = new RelationshipRepository(ormConfiguration.getEntityManager());
+			final var visitRepository = new VisitRepository(ormConfiguration.getEntityManager());
 			
 			final var emailSender = new EmailSender(emailConfiguration);
 			
@@ -180,6 +187,7 @@ public class Matcha {
 			final var webSocketService = new WebSocketController(webSocket, jwtAuthenticator);
 			final var reportService = new ReportService(reportRepository, eventPublisher);
 			final var notificationService = new NotificationService(notificationRepository, relationshipService, eventPublisher);
+			final var visitService = new VisitService(visitRepository, eventPublisher);
 			
 			final var services = Arrays.asList(new Object[] {
 				userService,
@@ -193,6 +201,7 @@ public class Matcha {
 				webSocketService,
 				reportService,
 				relationshipService,
+				visitService,
 			});
 			
 			final var eventListenerFactory = new EventListenerFactory(eventPublisher);
@@ -204,13 +213,14 @@ public class Matcha {
 			final var pictureMapper = new PictureMapper(pictureService);
 			final var userMapper = new UserMapper(relationshipService, pictureService, pictureMapper);
 			final var reportMapper = new ReportMapper(userMapper);
+			final var visitMapper = new VisitMapper(userMapper);
 			
 			final var mvcConfiguration = configureMvc(objectMapper, validator, convertionService, jwtAuthenticator, authService);
 			final var routeRegistry = new RouteRegistry(mvcConfiguration);
 			
 			routeRegistry.add(new AuthController(authService));
 			routeRegistry.add(new PictureController(userService, pictureService, pictureMapper));
-			routeRegistry.add(new UserController(userService, eventPublisher, userMapper));
+			routeRegistry.add(new UserController(userService, userMapper));
 			routeRegistry.add(new LikeController(relationshipService, userService, userMapper));
 			routeRegistry.add(new TagController(tagService, userTagService));
 			routeRegistry.add(new UserTagController(userTagService, userService, tagService));
@@ -218,6 +228,7 @@ public class Matcha {
 			routeRegistry.add(new NotificationController(notificationService));
 			routeRegistry.add(new ReportController(reportService, userService, reportMapper));
 			routeRegistry.add(new BlockController(relationshipService, userService, userMapper));
+			routeRegistry.add(new VisitController(visitService, userService, visitMapper));
 			
 			final var swagger = new OpenAPI()
 				.schemaRequirement("JWT", new SecurityScheme()

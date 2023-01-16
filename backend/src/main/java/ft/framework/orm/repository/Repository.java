@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import ft.framework.mvc.domain.Page;
 import ft.framework.mvc.domain.Pageable;
+import ft.framework.mvc.domain.Sort;
 import ft.framework.orm.EntityManager;
 import ft.framework.orm.mapping.Entity;
 import ft.framework.orm.predicate.Predicate;
@@ -73,6 +74,13 @@ public class Repository<T, ID> {
 	
 	protected Optional<T> findBy(Predicate<T> predicate) {
 		return entityManager.findBy(entity, predicate);
+	}
+	
+	protected Optional<T> findFirstBy(Predicate<T> predicate) {
+		final var pageable = new Pageable(1, 0, Sort.UNSORTED);
+		final var page = entityManager.findAllBy(entity, predicate, pageable);
+		
+		return page.getContent().stream().findFirst();
 	}
 	
 	protected List<T> findAllBy(Predicate<T> predicate) {

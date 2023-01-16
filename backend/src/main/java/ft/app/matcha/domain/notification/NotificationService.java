@@ -12,7 +12,7 @@ import ft.app.matcha.domain.relationship.RelationshipService;
 import ft.app.matcha.domain.relationship.event.LikedEvent;
 import ft.app.matcha.domain.relationship.event.UnlikedEvent;
 import ft.app.matcha.domain.user.User;
-import ft.app.matcha.domain.user.event.UserViewedEvent;
+import ft.app.matcha.domain.visit.event.VisitedEvent;
 import ft.framework.event.ApplicationEventPublisher;
 import ft.framework.event.annotation.EventListener;
 import ft.framework.mvc.domain.Page;
@@ -85,11 +85,13 @@ public class NotificationService {
 	
 	/* The user's profile has been checked. */
 	@EventListener
-	public void onUserViewed(UserViewedEvent event) {
-		final var user = event.getUser();
-		final var viewer = event.getViewer();
+	public void onVisited(VisitedEvent event) {
+		final var visit = event.getVisit();
+		final var user = visit.getUser();
+		final var viewer = visit.getViewer();
 		
-		if (canCreate(user, viewer)) {
+		/* do not include anonymous visits */
+		if (viewer != null && canCreate(user, viewer)) {
 			create(user, Notification.Type.PROFILE_CHECKED, NotificationFormatter.formatProfileChecked(viewer));
 		}
 	}

@@ -1,3 +1,4 @@
+
 package ft.app.matcha.domain.user;
 
 import java.time.LocalDateTime;
@@ -39,7 +40,7 @@ public class User {
 	@JsonIgnore
 	private String password;
 	
-	@Column(nullable = false)
+	@Column(nullable = false, unique = true)
 	@JsonIgnore
 	private String email;
 	
