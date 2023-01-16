@@ -24,6 +24,9 @@
             <v-btn color="primary" :to="`/users/${user.id}/messages`">
               messages
             </v-btn>
+            <v-btn color="primary" :to="`/users/${user.id}/visits`">
+              visits
+            </v-btn>
           </v-card-actions>
         </v-card>
       </v-col>
@@ -61,11 +64,8 @@ export default defineComponent({
       ).content
     })
 
-    const authStore = useAuthStore()
     onMounted(() => {
-      if (authStore.logged) {
-        $axios.post(`/api/users/${user.value.id}/view`).catch(() => void 0)
-      }
+      $axios.post(`/api/users/${user.value.id}/visits`).catch(() => void 0)
     })
 
     return {
