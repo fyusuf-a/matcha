@@ -3,8 +3,9 @@ version: '3.4'
 services:
   frontend:
     image: fyusufa/matcha_frontend
+    expose:
+      - 80
     ports:
-      - ${FRONTEND_PORT}:80
       # the following port is necessary for vite hot module reload (HMR)
       - 4443:4443
     volumes:
@@ -22,8 +23,8 @@ services:
       - backend
   backend:
     image: fyusufa/matcha_backend
-    ports:
-      - ${BACKEND_PORT}:4567
+    expose:
+      - 4567
     environment:
       DATABASE_HOST: mysql
       DATABASE_PORT: 3306
@@ -55,6 +56,16 @@ services:
       - mysql-data:/var/lib/mysql
       - ./database/server.cnf:/etc/mysql/conf.d/server.cnf
       - ./database/create.sql:/docker-entrypoint-initdb.d/create.sql
+  gateway:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - 80:80
+    volumes:
+      - ./gateway/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+      - frontend
   phpmyadmin:
     image: phpmyadmin
     restart: unless-stopped
