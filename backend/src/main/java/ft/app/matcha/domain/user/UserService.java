@@ -1,18 +1,20 @@
 package ft.app.matcha.domain.user;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import ft.app.matcha.configuration.MatchaConfigurationProperties;
-import ft.app.matcha.domain.block.event.BlockedEvent;
-import ft.app.matcha.domain.like.event.LikedEvent;
-import ft.app.matcha.domain.like.event.UnlikedEvent;
+import ft.app.matcha.domain.relationship.event.BlockedEvent;
+import ft.app.matcha.domain.relationship.event.LikedEvent;
+import ft.app.matcha.domain.relationship.event.UnlikedEvent;
 import ft.app.matcha.domain.report.event.ReportedEvent;
+import ft.app.matcha.domain.user.exception.EmailAlreadyUsedException;
 import ft.app.matcha.domain.user.exception.LoginAlreadyTakenException;
-import ft.app.matcha.domain.user.model.UserPatchForm;
 import ft.framework.event.annotation.EventListener;
 import ft.framework.mvc.domain.Page;
 import ft.framework.mvc.domain.Pageable;
 import ft.framework.orm.error.DuplicateValueException;
+import ft.framework.orm.mapping.contraint.Constraint;
 
 public class UserService {
 	
@@ -30,7 +32,7 @@ public class UserService {
 		);
 	}
 	
-	public User create(String firstName, String lastName, String email, String login, String password) {
+	public User create(String firstName, String lastName, String email, String login, String password, boolean emailConfirmed) {
 		try {
 			return repository.save(new User()
 				.setFirstName(firstName)
@@ -38,8 +40,16 @@ public class UserService {
 				.setEmail(email)
 				.setLogin(login)
 				.setPassword(password)
+				.setEmailConfirmed(emailConfirmed)
+				.setEmailConfirmedAt(emailConfirmed ? LocalDateTime.now() : null)
 			);
 		} catch (DuplicateValueException exception) {
+			final var unique = Optional.ofNullable(exception.getConstraint()).map(Constraint::getName).orElse("");
+			
+			if (unique.contains(User.Fields.email)) {
+				throw new EmailAlreadyUsedException(email);
+			}
+			
 			throw new LoginAlreadyTakenException(login);
 		}
 	}
@@ -64,19 +74,9 @@ public class UserService {
 		return repository.save(user);
 	}
 	
-	public User patch(User user, UserPatchForm form) {
-		Optional.ofNullable(form.getFirstName()).ifPresent(user::setFirstName);
-		Optional.ofNullable(form.getLastName()).ifPresent(user::setLastName);
-		Optional.ofNullable(form.getBiography()).ifPresent(user::setBiography);
-		Optional.ofNullable(form.getGender()).ifPresent(user::setGender);
-		Optional.ofNullable(form.getSexualOrientation()).ifPresent(user::setSexualOrientation);
-		
-		return repository.save(user);
-	}
-	
 	@EventListener
 	public void onLiked(LikedEvent event) {
-		final var user = event.getLike().getPeer();
+		final var user = event.getPeer();
 		
 		changeFame(user, fameValues.onLike());
 	}
@@ -90,7 +90,7 @@ public class UserService {
 	
 	@EventListener
 	public void onBlocked(BlockedEvent event) {
-		final var user = event.getBlock().getPeer();
+		final var user = event.getPeer();
 		
 		changeFame(user, fameValues.onBlock());
 	}

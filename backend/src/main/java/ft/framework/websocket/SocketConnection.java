@@ -1,5 +1,7 @@
 package ft.framework.websocket;
 
+import java.net.HttpCookie;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -56,7 +58,7 @@ public class SocketConnection {
 			leave(room);
 		}
 	}
-
+	
 	public void emit(String event, Object payload) {
 		final var json = handler.convertToJson(event, payload);
 		emit(json);
@@ -65,7 +67,7 @@ public class SocketConnection {
 	public void emit(String message) {
 		session.getRemote().sendString(message, NothingWriteCallback.INSTANCE);
 	}
-
+	
 	@SneakyThrows
 	public void close() {
 		session.disconnect();
@@ -74,15 +76,25 @@ public class SocketConnection {
 	private static enum NothingWriteCallback implements WriteCallback {
 		
 		INSTANCE;
-
+		
 		@Override
 		public void writeFailed(Throwable x) {
 		}
-
+		
 		@Override
 		public void writeSuccess() {
 		}
 		
+	}
+	
+	public Optional<HttpCookie> getCookie(String name) {
+		for (final var cookie : session.getUpgradeRequest().getCookies()) {
+			if (name.equals(cookie.getName())) {
+				return Optional.of(cookie);
+			}
+		}
+		
+		return Optional.empty();
 	}
 	
 }

@@ -44,9 +44,6 @@ public class Picture {
 	private String description;
 	
 	@Column(nullable = false)
-	private boolean isDefault;
-	
-	@Column(nullable = false)
 	@JsonFormat(shape = JsonFormat.Shape.STRING)
 	private LocalDateTime createdAt;
 	

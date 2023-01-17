@@ -10,53 +10,68 @@ import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import ft.app.matcha.configuration.AuthConfigurationProperties;
 import ft.app.matcha.configuration.DatabaseConfigurationProperties;
 import ft.app.matcha.configuration.EmailConfigurationProperties;
+import ft.app.matcha.configuration.HeartbeatConfigurationProperties;
 import ft.app.matcha.configuration.MatchaConfigurationProperties;
-import ft.app.matcha.domain.auth.AuthController;
 import ft.app.matcha.domain.auth.AuthService;
 import ft.app.matcha.domain.auth.EmailSender;
 import ft.app.matcha.domain.auth.JwtService;
+import ft.app.matcha.domain.auth.OAuthService;
 import ft.app.matcha.domain.auth.Token;
 import ft.app.matcha.domain.auth.TokenRepository;
 import ft.app.matcha.domain.auth.TokenService;
-import ft.app.matcha.domain.block.Block;
-import ft.app.matcha.domain.block.BlockController;
-import ft.app.matcha.domain.block.BlockRepository;
-import ft.app.matcha.domain.block.BlockService;
-import ft.app.matcha.domain.like.Like;
-import ft.app.matcha.domain.like.LikeController;
-import ft.app.matcha.domain.like.LikeRepository;
-import ft.app.matcha.domain.like.LikeService;
+import ft.app.matcha.domain.heartbeat.Heartbeat;
+import ft.app.matcha.domain.heartbeat.HeartbeatRepository;
+import ft.app.matcha.domain.heartbeat.HeartbeatService;
+import ft.app.matcha.domain.heartbeat.IPLocationService;
 import ft.app.matcha.domain.message.Message;
-import ft.app.matcha.domain.message.MessageController;
 import ft.app.matcha.domain.message.MessageRepository;
 import ft.app.matcha.domain.message.MessageService;
 import ft.app.matcha.domain.notification.Notification;
-import ft.app.matcha.domain.notification.NotificationController;
 import ft.app.matcha.domain.notification.NotificationRepository;
 import ft.app.matcha.domain.notification.NotificationService;
+import ft.app.matcha.domain.picture.DefaultPicture;
+import ft.app.matcha.domain.picture.DefaultPictureRepository;
 import ft.app.matcha.domain.picture.Picture;
-import ft.app.matcha.domain.picture.PictureController;
 import ft.app.matcha.domain.picture.PictureRepository;
 import ft.app.matcha.domain.picture.PictureService;
+import ft.app.matcha.domain.relationship.Relationship;
+import ft.app.matcha.domain.relationship.RelationshipRepository;
+import ft.app.matcha.domain.relationship.RelationshipService;
 import ft.app.matcha.domain.report.Report;
-import ft.app.matcha.domain.report.ReportController;
 import ft.app.matcha.domain.report.ReportRepository;
 import ft.app.matcha.domain.report.ReportService;
-import ft.app.matcha.domain.socket.WebSocketService;
 import ft.app.matcha.domain.tag.Tag;
-import ft.app.matcha.domain.tag.TagController;
 import ft.app.matcha.domain.tag.TagRepository;
 import ft.app.matcha.domain.tag.TagService;
 import ft.app.matcha.domain.tag.UserTag;
-import ft.app.matcha.domain.tag.UserTagController;
 import ft.app.matcha.domain.tag.UserTagRepository;
 import ft.app.matcha.domain.tag.UserTagService;
 import ft.app.matcha.domain.user.User;
-import ft.app.matcha.domain.user.UserController;
 import ft.app.matcha.domain.user.UserRepository;
 import ft.app.matcha.domain.user.UserService;
-import ft.app.matcha.security.JwtAuthenticationFilter;
-import ft.app.matcha.security.JwtAuthenticator;
+import ft.app.matcha.domain.visit.Visit;
+import ft.app.matcha.domain.visit.VisitRepository;
+import ft.app.matcha.domain.visit.VisitService;
+import ft.app.matcha.security.jwt.JwtAuthenticator;
+import ft.app.matcha.security.jwt.JwtCookieAuthenticationFilter;
+import ft.app.matcha.security.jwt.JwtHeaderAuthenticationFilter;
+import ft.app.matcha.web.AuthController;
+import ft.app.matcha.web.BlockController;
+import ft.app.matcha.web.HeartbeatController;
+import ft.app.matcha.web.LikeController;
+import ft.app.matcha.web.MessageController;
+import ft.app.matcha.web.NotificationController;
+import ft.app.matcha.web.PictureController;
+import ft.app.matcha.web.ReportController;
+import ft.app.matcha.web.TagController;
+import ft.app.matcha.web.UserController;
+import ft.app.matcha.web.UserTagController;
+import ft.app.matcha.web.VisitController;
+import ft.app.matcha.web.WebSocketController;
+import ft.app.matcha.web.map.PictureMapper;
+import ft.app.matcha.web.map.ReportMapper;
+import ft.app.matcha.web.map.UserMapper;
+import ft.app.matcha.web.map.VisitMapper;
 import ft.framework.convert.service.ConvertionService;
 import ft.framework.convert.service.SimpleConvertionService;
 import ft.framework.event.ApplicationEventPublisher;
@@ -69,12 +84,14 @@ import ft.framework.mvc.mapping.RouteRegistry;
 import ft.framework.mvc.resolver.argument.impl.AuthenticationHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.BodyHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.FormDataHandlerMethodArgumentResolver;
+import ft.framework.mvc.resolver.argument.impl.InetAddressHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.PageableHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.PrincipalHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.QueryHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.RequestHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.ResponseHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.VariableHandlerMethodArgumentResolver;
+import ft.framework.mvc.security.CompositeAuthenticationFilter;
 import ft.framework.orm.EntityManager;
 import ft.framework.orm.OrmConfiguration;
 import ft.framework.orm.dialect.MySQLDialect;
@@ -95,6 +112,7 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
 
 @Slf4j
 public class Matcha {
@@ -111,6 +129,9 @@ public class Matcha {
 				.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
 				.registerModule(new JavaTimeModule());
 			
+			final var httpClient = new OkHttpClient.Builder()
+				.build();
+			
 			final var validator = new Validator();
 			final var convertionService = new SimpleConvertionService();
 			
@@ -124,18 +145,22 @@ public class Matcha {
 			final var authConfiguration = propertyBinder.bind(new AuthConfigurationProperties());
 			final var emailConfiguration = propertyBinder.bind(new EmailConfigurationProperties());
 			final var matchaConfiguration = propertyBinder.bind(new MatchaConfigurationProperties());
+			final var heartbeatConfiguration = propertyBinder.bind(new HeartbeatConfigurationProperties());
 			
 			final var ormConfiguration = configureOrm(databaseConfiguration, new Class<?>[] {
 				User.class,
 				Notification.class,
-				Like.class,
+				Relationship.class,
 				Token.class,
 				Picture.class,
+				DefaultPicture.class,
 				Tag.class,
 				UserTag.class,
 				Message.class,
 				Report.class,
-				Block.class,
+				Relationship.class,
+				Visit.class,
+				Heartbeat.class,
 			});
 			
 			final var webSocket = WebSocketHandler.create(objectMapper);
@@ -147,29 +172,34 @@ public class Matcha {
 			final var notificationRepository = new NotificationRepository(ormConfiguration.getEntityManager());
 			final var tokenRepository = new TokenRepository(ormConfiguration.getEntityManager());
 			final var pictureRepository = new PictureRepository(ormConfiguration.getEntityManager());
-			final var likeRepository = new LikeRepository(ormConfiguration.getEntityManager());
+			final var defaultPictureRepository = new DefaultPictureRepository(ormConfiguration.getEntityManager());
 			final var tagRepository = new TagRepository(ormConfiguration.getEntityManager());
 			final var userTagRepository = new UserTagRepository(ormConfiguration.getEntityManager());
 			final var messageRepository = new MessageRepository(ormConfiguration.getEntityManager());
 			final var reportRepository = new ReportRepository(ormConfiguration.getEntityManager());
-			final var blockRepository = new BlockRepository(ormConfiguration.getEntityManager());
+			final var relationshipRepository = new RelationshipRepository(ormConfiguration.getEntityManager());
+			final var visitRepository = new VisitRepository(ormConfiguration.getEntityManager());
+			final var heartbeatRepository = new HeartbeatRepository(ormConfiguration.getEntityManager());
 			
 			final var emailSender = new EmailSender(emailConfiguration);
 			
 			final var userService = new UserService(userRepository, matchaConfiguration);
 			final var jwtService = new JwtService(userRepository, authConfiguration);
 			final var tokenService = new TokenService(tokenRepository, authConfiguration, eventPublisher);
-			final var authService = new AuthService(tokenService, userService, jwtService, emailSender, eventPublisher);
-			final var pictureService = new PictureService(pictureRepository, matchaConfiguration);
-			final var blockService = new BlockService(blockRepository, eventPublisher);
-			final var likeService = new LikeService(likeRepository, eventPublisher, blockService);
+			final var pictureService = new PictureService(pictureRepository, defaultPictureRepository, httpClient, matchaConfiguration);
+			final var oAuthService = new OAuthService(objectMapper, httpClient, authConfiguration);
+			final var authService = new AuthService(tokenService, userService, jwtService, emailSender, oAuthService, pictureService, eventPublisher);
+			final var relationshipService = new RelationshipService(relationshipRepository, eventPublisher);
 			final var tagService = new TagService(tagRepository);
 			final var userTagService = new UserTagService(userTagRepository, matchaConfiguration);
 			final var messageService = new MessageService(messageRepository, eventPublisher);
 			final var jwtAuthenticator = new JwtAuthenticator(jwtService);
-			final var webSocketService = new WebSocketService(webSocket, jwtAuthenticator);
+			final var webSocketService = new WebSocketController(webSocket, jwtAuthenticator);
 			final var reportService = new ReportService(reportRepository, eventPublisher);
-			final var notificationService = new NotificationService(notificationRepository, blockService, eventPublisher);
+			final var notificationService = new NotificationService(notificationRepository, relationshipService, eventPublisher);
+			final var visitService = new VisitService(visitRepository, eventPublisher);
+			final var ipLocationService = new IPLocationService(httpClient, heartbeatConfiguration);
+			final var heartbeatService = new HeartbeatService(heartbeatRepository, ipLocationService, heartbeatConfiguration);
 			
 			final var services = Arrays.asList(new Object[] {
 				userService,
@@ -177,13 +207,15 @@ public class Matcha {
 				authService,
 				notificationService,
 				pictureService,
-				likeService,
 				tagService,
 				userTagService,
 				messageService,
 				webSocketService,
 				reportService,
-				blockService,
+				relationshipService,
+				visitService,
+				ipLocationService,
+				heartbeatService,
 			});
 			
 			final var eventListenerFactory = new EventListenerFactory(eventPublisher);
@@ -192,19 +224,26 @@ public class Matcha {
 			final var scheduledFactory = new ScheduledFactory(taskScheduler);
 			services.forEach(scheduledFactory::scan);
 			
-			final var mvcConfiguration = configureMvc(objectMapper, validator, convertionService, jwtAuthenticator);
+			final var pictureMapper = new PictureMapper(pictureService);
+			final var userMapper = new UserMapper(relationshipService, pictureService, pictureMapper, heartbeatService);
+			final var reportMapper = new ReportMapper(userMapper);
+			final var visitMapper = new VisitMapper(userMapper);
+			
+			final var mvcConfiguration = configureMvc(objectMapper, validator, convertionService, jwtAuthenticator, authService);
 			final var routeRegistry = new RouteRegistry(mvcConfiguration);
 			
 			routeRegistry.add(new AuthController(authService));
-			routeRegistry.add(new PictureController(userService, pictureService));
-			routeRegistry.add(new UserController(userService, eventPublisher));
-			routeRegistry.add(new LikeController(likeService, userService));
+			routeRegistry.add(new PictureController(userService, pictureService, pictureMapper));
+			routeRegistry.add(new UserController(userService, userMapper));
+			routeRegistry.add(new LikeController(relationshipService, userService, userMapper));
 			routeRegistry.add(new TagController(tagService, userTagService));
 			routeRegistry.add(new UserTagController(userTagService, userService, tagService));
 			routeRegistry.add(new MessageController(messageService, userService));
 			routeRegistry.add(new NotificationController(notificationService));
-			routeRegistry.add(new ReportController(reportService, userService));
-			routeRegistry.add(new BlockController(blockService, userService));
+			routeRegistry.add(new ReportController(reportService, userService, reportMapper));
+			routeRegistry.add(new BlockController(relationshipService, userService, userMapper));
+			routeRegistry.add(new VisitController(visitService, userService, visitMapper));
+			routeRegistry.add(new HeartbeatController(heartbeatService));
 			
 			final var swagger = new OpenAPI()
 				.schemaRequirement("JWT", new SecurityScheme()
@@ -260,7 +299,7 @@ public class Matcha {
 	}
 	
 	@SneakyThrows
-	public static MvcConfiguration configureMvc(ObjectMapper objectMapper, Validator validator, ConvertionService conversionService, JwtAuthenticator jwtAuthenticator) {
+	public static MvcConfiguration configureMvc(ObjectMapper objectMapper, Validator validator, ConvertionService conversionService, JwtAuthenticator jwtAuthenticator, AuthService authService) {
 		log.info("Waking up");
 		
 		return MvcConfiguration.builder()
@@ -281,8 +320,12 @@ public class Matcha {
 				new AuthenticationHandlerMethodArgumentResolver(),
 				new PrincipalHandlerMethodArgumentResolver(),
 				new FormDataHandlerMethodArgumentResolver(),
+				new InetAddressHandlerMethodArgumentResolver(),
 				new BodyHandlerMethodArgumentResolver(objectMapper)))
-			.filter(new JwtAuthenticationFilter(jwtAuthenticator))
+			.filter(CompositeAuthenticationFilter.builder()
+				.filter(new JwtHeaderAuthenticationFilter(jwtAuthenticator))
+				.filter(new JwtCookieAuthenticationFilter(jwtAuthenticator, authService))
+				.build())
 			.filter(new LoggingFilter())
 			.build();
 	}

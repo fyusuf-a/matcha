@@ -61,7 +61,7 @@ export default defineComponent({
       try {
         loading.value = true
 
-        await $axios.post(`/api/auth/change-password`, {
+        await $axios.post(`/api/auth/reset-password`, {
           token: token.value,
           password: password.value,
         })

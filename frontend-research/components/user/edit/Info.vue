@@ -86,7 +86,7 @@ export default defineComponent({
       try {
         loading.value = true
 
-        authStore.user = await $axios.$patch(`/api/users/${user?.id}`, inputs)
+        authStore.user = await $axios.$patch(`/api/users/@me`, inputs)
 
         $dialog.notify.success('Saved!')
       } catch (error) {

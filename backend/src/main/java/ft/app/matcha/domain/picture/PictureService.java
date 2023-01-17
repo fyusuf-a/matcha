@@ -15,15 +15,22 @@ import ft.app.matcha.domain.user.User;
 import ft.framework.mvc.domain.Page;
 import ft.framework.mvc.domain.Pageable;
 import lombok.SneakyThrows;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 
 public class PictureService {
 	
 	private final PictureRepository repository;
+	private final DefaultPictureRepository defaultRepository;
+	private final OkHttpClient httpClient;
 	private final long maxPictureCount;
 	private final String storage;
 	
-	public PictureService(PictureRepository repository, MatchaConfigurationProperties matchaConfigurationProperties) {
+	public PictureService(PictureRepository repository, DefaultPictureRepository defaultRepository, OkHttpClient httpClient, MatchaConfigurationProperties matchaConfigurationProperties) {
 		this.repository = repository;
+		this.defaultRepository = defaultRepository;
+		this.httpClient = httpClient;
 		this.maxPictureCount = matchaConfigurationProperties.getMaximumPictureCount();
 		this.storage = matchaConfigurationProperties.getPictureStorage();
 	}
@@ -36,13 +43,20 @@ public class PictureService {
 		return repository.findById(id);
 	}
 	
-	public Picture setDefault(Picture picture) {
-		final var pictures = repository.findAllByUserAndIsDefaultTrue(picture.getUser());
-		pictures.forEach((picture_) -> picture_.setDefault(false));
-		repository.saveAll(pictures);
+	public Optional<DefaultPicture> getDefault(User user) {
+		return defaultRepository.findByUser(user);
+	}
+	
+	public DefaultPicture setDefault(Picture picture) {
+		final var user = picture.getUser();
 		
-		picture.setDefault(true);
-		return repository.save(picture);
+		final var default_ = defaultRepository
+			.findByUser(user)
+			.orElseGet(() -> new DefaultPicture().setUser(user))
+			.setPicture(picture)
+			.setSelectedAt(LocalDateTime.now());
+		
+		return defaultRepository.save(default_);
 	}
 	
 	public Picture upload(User user, byte[] bytes) {
@@ -58,6 +72,22 @@ public class PictureService {
 				.setPath(path)
 				.setCreatedAt(LocalDateTime.now())
 		);
+	}
+	
+	@SneakyThrows
+	public Picture upload(User user, String url) {
+		final var call = httpClient.newCall(new Request.Builder()
+			.get()
+			.url(HttpUrl.parse(url))
+			.build());
+		
+		try (final var response = call.execute()) {
+			try (final var body = response.body()) {
+				final var bytes = body.bytes();
+				
+				return upload(user, bytes);
+			}
+		}
 	}
 	
 	@SneakyThrows

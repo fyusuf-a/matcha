@@ -6,14 +6,13 @@ import java.util.Optional;
 import org.apache.commons.lang3.tuple.Pair;
 
 import ft.app.matcha.domain.auth.event.RegisterEvent;
-import ft.app.matcha.domain.block.BlockService;
-import ft.app.matcha.domain.like.event.LikedEvent;
-import ft.app.matcha.domain.like.event.UnlikedEvent;
 import ft.app.matcha.domain.message.event.MessageCreatedEvent;
 import ft.app.matcha.domain.notification.event.NotificationCreatedEvent;
-import ft.app.matcha.domain.notification.model.NotificationPatchForm;
+import ft.app.matcha.domain.relationship.RelationshipService;
+import ft.app.matcha.domain.relationship.event.LikedEvent;
+import ft.app.matcha.domain.relationship.event.UnlikedEvent;
 import ft.app.matcha.domain.user.User;
-import ft.app.matcha.domain.user.event.UserViewedEvent;
+import ft.app.matcha.domain.visit.event.VisitedEvent;
 import ft.framework.event.ApplicationEventPublisher;
 import ft.framework.event.annotation.EventListener;
 import ft.framework.mvc.domain.Page;
@@ -24,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class NotificationService {
 	
 	private final NotificationRepository repository;
-	private final BlockService blockService;
+	private final RelationshipService relationshipService;
 	private final ApplicationEventPublisher eventPublisher;
 	
 	public Optional<Notification> find(long id) {
@@ -58,13 +57,8 @@ public class NotificationService {
 		return create(user, type, contentAndLink.getLeft(), contentAndLink.getRight());
 	}
 	
-	public Notification patch(Notification notification, NotificationPatchForm form) {
-		Optional.ofNullable(form.getRead()).ifPresent((read) -> {
-			notification.setRead(read);
-			notification.setReadAt(read ? LocalDateTime.now() : null);
-		});
-		
-		return notification;
+	public Notification save(Notification notification) {
+		return repository.save(notification);
 	}
 	
 	@EventListener
@@ -81,22 +75,23 @@ public class NotificationService {
 			return;
 		}
 		
-		final var like = event.getLike();
-		final var user = like.getUser();
-		final var peer = like.getPeer();
+		final var user = event.getUser();
+		final var peer = event.getPeer();
 		
 		if (canCreate(peer, user)) {
-			create(peer, Notification.Type.LIKED, NotificationFormatter.formatLiked(like));
+			create(peer, Notification.Type.LIKED, NotificationFormatter.formatLiked(user));
 		}
 	}
 	
 	/* The user's profile has been checked. */
 	@EventListener
-	public void onUserViewed(UserViewedEvent event) {
-		final var user = event.getUser();
-		final var viewer = event.getViewer();
+	public void onVisited(VisitedEvent event) {
+		final var visit = event.getVisit();
+		final var user = visit.getUser();
+		final var viewer = visit.getViewer();
 		
-		if (canCreate(user, viewer)) {
+		/* do not include anonymous visits */
+		if (viewer != null && canCreate(user, viewer)) {
 			create(user, Notification.Type.PROFILE_CHECKED, NotificationFormatter.formatProfileChecked(viewer));
 		}
 	}
@@ -120,12 +115,11 @@ public class NotificationService {
 			return;
 		}
 		
-		final var like = event.getLike();
-		final var user = like.getUser();
-		final var peer = like.getPeer();
+		final var user = event.getUser();
+		final var peer = event.getPeer();
 		
 		if (canCreate(peer, user)) {
-			create(peer, Notification.Type.LIKED_BACK, NotificationFormatter.formatLikedBack(like));
+			create(peer, Notification.Type.LIKED_BACK, NotificationFormatter.formatLikedBack(user));
 		}
 	}
 	
@@ -141,7 +135,7 @@ public class NotificationService {
 	}
 	
 	public boolean canCreate(User user, User peer) {
-		return !blockService.isBlocked(user, peer);
+		return !relationshipService.isBlocked(user, peer);
 	}
 	
 }

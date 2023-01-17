@@ -1,3 +1,4 @@
+
 package ft.app.matcha.domain.user;
 
 import java.time.LocalDateTime;
@@ -12,8 +13,6 @@ import javax.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import ft.app.matcha.domain.user.model.Gender;
-import ft.app.matcha.domain.user.model.SexualOrientation;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.experimental.FieldNameConstants;
@@ -37,11 +36,11 @@ public class User {
 	@Column(nullable = false, unique = true)
 	private String login;
 	
-	@Column(nullable = false)
+	@Column
 	@JsonIgnore
 	private String password;
 	
-	@Column(nullable = false)
+	@Column(nullable = false, unique = true)
 	@JsonIgnore
 	private String email;
 	

@@ -3,8 +3,9 @@ version: '3.4'
 services:
   frontend:
     image: fyusufa/matcha_frontend
+    expose:
+      - 80
     ports:
-      - ${FRONTEND_PORT}:80
       # the following port is necessary for vite hot module reload (HMR)
       - 4443:4443
     volumes:
@@ -22,14 +23,14 @@ services:
       - backend
   backend:
     image: fyusufa/matcha_backend
-    ports:
-      - ${BACKEND_PORT}:4567
+    expose:
+      - 4567
     environment:
-      DATABASE_HOST: db
+      DATABASE_HOST: mysql
       DATABASE_PORT: 3306
-      DATABASE_USER: ${DB_USER}
-      DATABASE_PASSWORD: ${DB_PASSWORD}
-      DATABASE_DATABASE: ${DB_DATABASE}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_AUTO_RECONNECT: 'true'
       AUTH_JWT_SECRET: ${BACKEND_JWT_SECRET}
       AUTH_JWT_EXPIRATION: PT15M
@@ -43,40 +44,54 @@ services:
       MAIL_AUTH_EMAIL: ${BACKEND_MAIL}
       MAIL_AUTH_PASSWORD: ${BACKEND_MAIL_PASSWORD}
       MAIL_SENDER: ${BACKEND_MAIL}
+      HEARTBEAT_MAXMIND_LICENSE_KEY: ${BACKEND_MAXMIND_KEY}
+    volumes:
+      - backend-data:/app/data
     build:
       context: ./backend
       dockerfile: ${BACKEND_DOCKERFILE}
     restart: unless-stopped
     depends_on:
-      - db
-  db:
+      - mysql
+  mysql:
     image: fyusufa/matcha_mysql
     build:
-      context: ./db
+      context: ./database
       dockerfile: ${BACKEND_DOCKERFILE}
     restart: unless-stopped
     environment:
       MYSQL_ROOT_HOST: localhost
       MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DATABASE_USER}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_DATABASE: ${DATABASE_NAME}
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./db/01-setup.sh:/docker-entrypoint-initdb.d/01-setup.sh
-      - ./db/server.cnf:/etc/mysql/conf.d/server.cnf
+      - ./database/01-setup.sh:/docker-entrypoint-initdb.d/01-setup.sh
+      - ./database/server.cnf:/etc/mysql/conf.d/server.cnf
+  gateway:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - 80:80
+    volumes:
+      - ./gateway/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+      - frontend
   phpmyadmin:
     image: phpmyadmin
     restart: unless-stopped
     ports:
       - 8888:80
     environment:
-      PMA_HOST: db
-      PMA_USER: ${DB_USER}
-      PMA_PASSWORD: ${DB_PASSWORD}
+      PMA_HOST: mysql
+      PMA_USER: ${DATABASE_USER}
+      PMA_PASSWORD: ${DATABASE_PASSWORD}
     depends_on:
-      - db
+      - mysql
     profiles: ["debug"]
 
 volumes:
+  backend-data:
   mysql-data:

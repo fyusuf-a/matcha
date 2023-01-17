@@ -20,8 +20,9 @@
             </v-form>
           </v-card-text>
           <v-card-actions>
+            <v-btn to="/auth/oauth" color="secondary"> Login with Google </v-btn>
             <v-spacer />
-            <v-btn type="submit" form="form"> Login </v-btn>
+            <v-btn type="submit" color="primary" form="form"> Login </v-btn>
           </v-card-actions>
         </v-card>
       </v-col>

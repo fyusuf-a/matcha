@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.lang3.reflect.MethodUtils;
 
@@ -43,10 +44,19 @@ public class DefaultHandlerExceptionResolver implements HandlerExceptionResolver
 			builder.properties(properties);
 		}
 		
+		final var trace = resolveTrace(exception);
+		if (!properties.isEmpty()) {
+			builder.trace(trace);
+		}
+		
 		return builder.build();
 	}
 	
-	private static final List<Class<?>> IGNORED_CLASSES = Arrays.asList(Exception.class, Throwable.class); 
+	public static List<String> resolveTrace(Exception exception) {
+		return Arrays.asList(ExceptionUtils.getStackTrace(exception).split("\n"));
+	}
+	
+	private static final List<Class<?>> IGNORED_CLASSES = Arrays.asList(Exception.class, Throwable.class);
 	
 	public static String formatType(Class<?> clazz) {
 		final var parts = StringUtils.splitByCharacterTypeCamelCase(clazz.getSimpleName());
