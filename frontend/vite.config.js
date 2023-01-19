@@ -10,4 +10,9 @@ export default defineConfig({
       vueTsc: true,
     }),
   ],
+  resolve: {
+    alias: {
+      '@': '/src',
+    },
+  },
 });
