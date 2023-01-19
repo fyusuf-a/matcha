@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
-import { useMatchaStore } from '../store/index';
+import { useMatchaStore } from '@/store';
 
 const store = useMatchaStore();
 

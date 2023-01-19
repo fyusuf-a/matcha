@@ -18,6 +18,12 @@
 
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "*": ["*", "node_modules/*"],
+      "@/*": ["src/*"]
+    }
   }
 }
