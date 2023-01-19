@@ -1,0 +1,14 @@
+{
+    "env": {
+        "browser": true,
+        "es6": true,
+        "node": true
+    },
+    "extends": [
+        "airbnb-base",
+        "plugin:vue/recommended"
+    ],
+    "rules": {
+      "import/no-extraneous-dependencies": ["error", {"devDependencies": ["vite.config.js"]}]
+    }
+}
