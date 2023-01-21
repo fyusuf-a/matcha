@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import spark.utils.StringUtils;
 
 @Slf4j
 public class IPLocationService {
@@ -49,6 +50,10 @@ public class IPLocationService {
 	@SneakyThrows
 	public static void download(OkHttpClient httpClient, File destination, String licenseKey) {
 		log.info("Downloading GeoIP database from MAXMIND's servers...");
+		
+		if (StringUtils.isBlank(licenseKey)) {
+			throw new IllegalArgumentException("no license key provided");
+		}
 		
 		final var call = httpClient.newCall(new Request.Builder()
 			.get()
