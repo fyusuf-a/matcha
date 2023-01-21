@@ -24,6 +24,7 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
 import ft.app.matcha.configuration.EmailConfigurationProperties;
+import ft.app.matcha.configuration.UrlConfigurationProperties;
 import ft.framework.util.MediaTypes;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -35,14 +36,15 @@ public class EmailSender {
 	
 	public static final Pattern TITLE_PATTERN = Pattern.compile("<title>(.+?)</title>");
 	
-	private final EmailConfigurationProperties configuration;
+	private final EmailConfigurationProperties emailProperties;
 	private final InternetAddress from;
 	private final Configuration freemarkerConfiguration;
+	private final Urls urls;
 	
 	@SneakyThrows
-	public EmailSender(EmailConfigurationProperties configuration) {
-		this.configuration = configuration;
-		this.from = new InternetAddress(configuration.getSender());
+	public EmailSender(EmailConfigurationProperties emailProperties, UrlConfigurationProperties urlProperties) {
+		this.emailProperties = emailProperties;
+		this.from = new InternetAddress(emailProperties.getSender());
 		
 		this.freemarkerConfiguration = new Configuration(Configuration.VERSION_2_3_29);
 		this.freemarkerConfiguration.setClassForTemplateLoading(this.getClass(), "/");
@@ -51,6 +53,8 @@ public class EmailSender {
 		this.freemarkerConfiguration.setLogTemplateExceptions(false);
 		this.freemarkerConfiguration.setWrapUncheckedExceptions(true);
 		this.freemarkerConfiguration.setFallbackOnNullLoopVariable(false);
+		
+		this.urls = createUrls(urlProperties);
 	}
 	
 	public boolean sendConfirmationEmail(Token token) {
@@ -59,7 +63,7 @@ public class EmailSender {
 		final var user = token.getUser();
 		final var plain = getPlain(token);
 		
-		final var url = "http://localhost:3000/auth/confirm-email?token=%s".formatted(plain);
+		final var url = urls.confirmEmail().formatted(plain);
 		
 		final var properties = Map.of(
 			"url", url,
@@ -76,7 +80,7 @@ public class EmailSender {
 		final var user = token.getUser();
 		final var plain = getPlain(token);
 		
-		final var url = "http://localhost:3000/auth/change-password?token=%s".formatted(plain);
+		final var url = urls.changePassword().formatted(plain);
 		
 		final var properties = Map.of(
 			"url", url,
@@ -93,7 +97,7 @@ public class EmailSender {
 		final var user = token.getUser();
 		final var plain = getPlain(token);
 		
-		final var url = "http://localhost:3000/auth/change-email?token=%s".formatted(plain);
+		final var url = urls.changeEmail().formatted(plain);
 		
 		final var properties = Map.of(
 			"url", url,
@@ -109,17 +113,19 @@ public class EmailSender {
 		final var template = getTemplate(templateName);
 		final var rendered = render(template, properties);
 		
-		return sendEmail(rendered, email);
+		return sendEmail(rendered, templateName, email);
 	}
 	
-	public boolean sendEmail(String html, String email) {
+	public boolean sendEmail(String html, String templateName, String email) {
 		try {
 			final var session = getSession();
 			final var message = new MimeMessage(session);
 			
+			log.info("Sending email template={} to={}", templateName, email);
+			
 			message.setFrom(from);
 			message.addRecipient(Message.RecipientType.TO, new InternetAddress(email));
-			message.setSubject(extractSubject(html).orElse(configuration.getDefaultSubject()));
+			message.setSubject(extractSubject(html).orElse(emailProperties.getDefaultSubject()));
 			message.setContent(html, MediaTypes.HTML);
 			
 			Transport.send(message);
@@ -147,18 +153,18 @@ public class EmailSender {
 	
 	public Session getSession() {
 		final var properties = System.getProperties();
-		properties.put("mail.smtp.host", configuration.getHost());
-		properties.put("mail.smtp.port", configuration.getPort());
-		properties.put("mail.smtp.ssl.enable", configuration.isSsl());
-		properties.put("mail.smtp.auth", configuration.isAuth());
-		properties.put("mail.debug", configuration.isDebug());
+		properties.put("mail.smtp.host", emailProperties.getHost());
+		properties.put("mail.smtp.port", emailProperties.getPort());
+		properties.put("mail.smtp.ssl.enable", emailProperties.isSsl());
+		properties.put("mail.smtp.auth", emailProperties.isAuth());
+		properties.put("mail.debug", emailProperties.isDebug());
 		
-		if (StringUtils.isNotEmpty(configuration.getAuthEmail())) {
+		if (StringUtils.isNotEmpty(emailProperties.getAuthEmail())) {
 			return Session.getInstance(properties, new javax.mail.Authenticator() {
 				
 				@Override
 				protected PasswordAuthentication getPasswordAuthentication() {
-					return new PasswordAuthentication(configuration.getAuthEmail(), configuration.getAuthPassword());
+					return new PasswordAuthentication(emailProperties.getAuthEmail(), emailProperties.getAuthPassword());
 				}
 				
 			});
@@ -184,5 +190,30 @@ public class EmailSender {
 		
 		return Optional.of(matcher.group(1));
 	}
+	
+	public static Urls createUrls(UrlConfigurationProperties properties) {
+		var base = properties.getBase();
+		if (StringUtils.isBlank(base)) {
+			base = "";
+		}
+		
+		return new Urls(
+			toUrl(base, properties.getConfirmEmail()),
+			toUrl(base, properties.getChangePassword()),
+			toUrl(base, properties.getChangeEmail())
+		);
+	}
+	
+	public static String toUrl(String base, String format) {
+		return format
+			.replace("{base}", base)
+			.replace("{token}", "%s");
+	}
+	
+	public record Urls(
+		String confirmEmail,
+		String changePassword,
+		String changeEmail
+	) {}
 	
 }

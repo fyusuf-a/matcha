@@ -13,6 +13,7 @@ import ft.app.matcha.configuration.EmailConfigurationProperties;
 import ft.app.matcha.configuration.HeartbeatConfigurationProperties;
 import ft.app.matcha.configuration.MatchaConfigurationProperties;
 import ft.app.matcha.configuration.SwaggerConfigurationProperties;
+import ft.app.matcha.configuration.UrlConfigurationProperties;
 import ft.app.matcha.domain.auth.AuthService;
 import ft.app.matcha.domain.auth.EmailSender;
 import ft.app.matcha.domain.auth.JwtService;
@@ -149,6 +150,7 @@ public class Matcha {
 			final var matchaConfiguration = propertyBinder.bind(new MatchaConfigurationProperties());
 			final var heartbeatConfiguration = propertyBinder.bind(new HeartbeatConfigurationProperties());
 			final var swaggerConfiguration = propertyBinder.bind(new SwaggerConfigurationProperties());
+			final var urlConfiguration = propertyBinder.bind(new UrlConfigurationProperties());
 			
 			final var ormConfiguration = configureOrm(databaseConfiguration, new Class<?>[] {
 				User.class,
@@ -184,7 +186,7 @@ public class Matcha {
 			final var visitRepository = new VisitRepository(ormConfiguration.getEntityManager());
 			final var heartbeatRepository = new HeartbeatRepository(ormConfiguration.getEntityManager());
 			
-			final var emailSender = new EmailSender(emailConfiguration);
+			final var emailSender = new EmailSender(emailConfiguration, urlConfiguration);
 			
 			final var userService = new UserService(userRepository, matchaConfiguration);
 			final var jwtService = new JwtService(userRepository, authConfiguration);

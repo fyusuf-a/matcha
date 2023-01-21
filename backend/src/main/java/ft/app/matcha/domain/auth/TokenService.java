@@ -1,5 +1,6 @@
 package ft.app.matcha.domain.auth;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
@@ -40,11 +41,11 @@ public class TokenService {
 		final var configuration = configurations.get(type);
 		Objects.requireNonNull(configuration, () -> "no token configuration for type: " + type);
 		
-		final var plain = RandomStringUtils.randomAlphanumeric(configuration.getLength());
+		final var plain = RandomStringUtils.randomAlphanumeric(configuration.length());
 		final var encoded = encode(plain);
 		
 		final var createdAt = LocalDateTime.now();
-		final var expiredAt = createdAt.plus(configuration.getExpiration());
+		final var expiredAt = createdAt.plus(configuration.expiration());
 		
 		return repository.save(new Token()
 			.setType(type)
@@ -96,5 +97,10 @@ public class TokenService {
 			Map.entry(Token.Type.EMAIL, new TokenConfiguration(properties.getNewEmailTokenLength(), properties.getNewEmailTokenExpiration()))
 		);
 	}
+	
+	public record TokenConfiguration(
+		int length,
+		Duration expiration
+	) {}
 	
 }
