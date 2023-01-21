@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.apache.commons.lang3.StringUtils;
 
 import ft.app.matcha.domain.auth.event.RegisterEvent;
+import ft.app.matcha.domain.auth.exception.InvalidPasswordException;
 import ft.app.matcha.domain.auth.exception.InvalidTokenException;
 import ft.app.matcha.domain.auth.exception.WrongLoginOrPasswordException;
 import ft.app.matcha.domain.picture.PictureService;
@@ -73,6 +74,16 @@ public class AuthService {
 			.ifPresent(emailSender::sendPasswordResetEmail);
 	}
 	
+	public void changePassword(User user, String oldPassword, String newPassword) {
+		final var oldEncoded = encode(oldPassword);
+		if (!oldEncoded.equals(user.getPassword())) {
+			throw new InvalidPasswordException();
+		}
+		
+		final var encoded = encode(newPassword);
+		userService.save(user.setPassword(encoded));
+	}
+	
 	public void resetPassword(String passwordToken, String password) {
 		final var user = tokenService.validate(Token.Type.PASSWORD, passwordToken)
 			.orElseThrow(() -> new InvalidTokenException(Token.Type.PASSWORD));
@@ -88,7 +99,7 @@ public class AuthService {
 	public Tokens validateOAuthCode(String code) {
 		final var idToken = oAuthService.getIdToken(code);
 		final var oauthUser = oAuthService.getUser(idToken);
-
+		
 		final var optional = userService.find(oauthUser.email());
 		if (optional.isPresent()) {
 			return createTokens(optional.get());

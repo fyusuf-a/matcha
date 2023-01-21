@@ -92,11 +92,12 @@ public class PictureService {
 	
 	@SneakyThrows
 	public String store(byte[] bytes) {
-		final var path = Paths.get(storage, UUID.randomUUID().toString());
+		final var path = UUID.randomUUID().toString();
+		final var dataPath = Paths.get(storage, path);
 		
-		Files.write(path, bytes);
+		Files.write(dataPath, bytes);
 		
-		return path.toString();
+		return path;
 	}
 	
 	public boolean hasReachedMaximum(User user) {
@@ -118,7 +119,7 @@ public class PictureService {
 	}
 	
 	public Path toPath(Picture picture) {
-		return Paths.get(picture.getPath());
+		return Paths.get(storage, picture.getPath());
 	}
 	
 }

@@ -2,8 +2,10 @@ package ft.app.matcha.web;
 
 import ft.app.matcha.domain.auth.AuthService;
 import ft.app.matcha.domain.auth.Tokens;
+import ft.app.matcha.domain.auth.exception.InvalidConfirmPasswordException;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.security.jwt.JwtCookieAuthenticationFilter;
+import ft.app.matcha.web.form.ChangePasswordForm;
 import ft.app.matcha.web.form.ConfirmForm;
 import ft.app.matcha.web.form.ForgotForm;
 import ft.app.matcha.web.form.LoginForm;
@@ -112,6 +114,20 @@ public class AuthController {
 		@Body @Valid ForgotForm form
 	) {
 		authService.forgot(form.getEmail());
+	}
+	
+	@PostMapping(path = "/change-password")
+	@ApiOperation(summary = "Change your password.")
+	@Authenticated
+	public void changePassword(
+		@Body @Valid ChangePasswordForm form,
+		@Principal User user
+	) {
+		if (!form.getNewPassword().equals(form.getConfirmPassword())) {
+			throw new InvalidConfirmPasswordException();
+		}
+		
+		authService.changePassword(user, form.getOldPassword(), form.getNewPassword());
 	}
 	
 	@PostMapping(path = "/reset-password")
