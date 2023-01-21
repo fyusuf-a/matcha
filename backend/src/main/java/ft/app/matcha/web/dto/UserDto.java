@@ -22,6 +22,7 @@ public class UserDto {
 
 	private PictureDto picture;
 	private RelationshipDto relationship;
+	private LocationDto location;
 	private Presence presence;
 	
 }

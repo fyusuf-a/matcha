@@ -1,6 +1,6 @@
 package ft.app.matcha.domain.heartbeat;
 
-public record Location(
+public record IpLocation(
 	String country,
 	String city,
 	Double latitude,
