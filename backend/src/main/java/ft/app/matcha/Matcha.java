@@ -12,6 +12,7 @@ import ft.app.matcha.configuration.DatabaseConfigurationProperties;
 import ft.app.matcha.configuration.EmailConfigurationProperties;
 import ft.app.matcha.configuration.HeartbeatConfigurationProperties;
 import ft.app.matcha.configuration.MatchaConfigurationProperties;
+import ft.app.matcha.configuration.SwaggerConfigurationProperties;
 import ft.app.matcha.domain.auth.AuthService;
 import ft.app.matcha.domain.auth.EmailSender;
 import ft.app.matcha.domain.auth.JwtService;
@@ -110,6 +111,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
@@ -146,6 +148,7 @@ public class Matcha {
 			final var emailConfiguration = propertyBinder.bind(new EmailConfigurationProperties());
 			final var matchaConfiguration = propertyBinder.bind(new MatchaConfigurationProperties());
 			final var heartbeatConfiguration = propertyBinder.bind(new HeartbeatConfigurationProperties());
+			final var swaggerConfiguration = propertyBinder.bind(new SwaggerConfigurationProperties());
 			
 			final var ormConfiguration = configureOrm(databaseConfiguration, new Class<?>[] {
 				User.class,
@@ -253,6 +256,12 @@ public class Matcha {
 				.info(new Info()
 					.title("Matcha")
 					.version("1.0"));
+			
+			swagger.addServersItem(
+				new Server()
+					.description(swaggerConfiguration.getServerName())
+					.url(swaggerConfiguration.getServerUrl())
+			);
 			
 			SwaggerBuilder.build(swagger, routeRegistry.getRoutes());
 			routeRegistry.add(new SwaggerController(swagger));
