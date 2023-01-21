@@ -12,6 +12,7 @@ export enum SexualOrientation {
 export interface User {
     id: number;
     login: string;
+    email: string;
     firstName: string;
     lastName: string;
     biography?: string;

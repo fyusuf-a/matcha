@@ -5,7 +5,7 @@
         <v-card>
           <v-card-title> Login </v-card-title>
           <v-card-subtitle>
-            <router-link :to="{ path: '/auth/forgot', query: { from } }">
+            <router-link :to="{ path: '/auth/forgot-password', query: { from } }">
               Forgot password?
             </router-link>
           </v-card-subtitle>
