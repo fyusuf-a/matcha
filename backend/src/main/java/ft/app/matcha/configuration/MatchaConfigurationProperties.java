@@ -11,8 +11,11 @@ import lombok.Data;
 public class MatchaConfigurationProperties {
 	
 	private long maximumPictureCount = 5;
+	
 	@NotBlank
 	private String pictureStorage = "./data/pictures/";
+	
+	private boolean animatedPictureAllowed = true;
 	
 	private long maximumTagCount = 5;
 	
