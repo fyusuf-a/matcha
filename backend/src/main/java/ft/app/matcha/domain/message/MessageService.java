@@ -3,6 +3,7 @@ package ft.app.matcha.domain.message;
 import java.time.LocalDateTime;
 
 import ft.app.matcha.domain.message.event.MessageCreatedEvent;
+import ft.app.matcha.domain.message.exception.MessageYourselfException;
 import ft.app.matcha.domain.message.exception.NotConnectedException;
 import ft.app.matcha.domain.relationship.RelationshipService;
 import ft.app.matcha.domain.user.User;
@@ -23,6 +24,10 @@ public class MessageService {
 	}
 	
 	public Message create(User user, User peer, String content) {
+		if (user.getId() == peer.getId()) {
+			throw new MessageYourselfException();
+		}
+		
 		if (!relationshipService.areConnected(user, peer)) {
 			throw new NotConnectedException();
 		}
@@ -40,7 +45,7 @@ public class MessageService {
 		return message;
 	}
 	
-//	@Scheduled(fixedDelay = 1000)
+	// @Scheduled(fixedDelay = 1000)
 	public void fake() {
 		create(new User().setId(1), new User().setId(2), "Hey its %s!".formatted(System.currentTimeMillis()));
 	}
