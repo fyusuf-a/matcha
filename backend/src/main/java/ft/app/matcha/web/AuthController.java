@@ -5,14 +5,15 @@ import ft.app.matcha.domain.auth.Tokens;
 import ft.app.matcha.domain.auth.exception.InvalidConfirmPasswordException;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.security.jwt.JwtCookieAuthenticationFilter;
+import ft.app.matcha.web.form.ChangeEmailForm;
 import ft.app.matcha.web.form.ChangePasswordForm;
-import ft.app.matcha.web.form.ConfirmForm;
 import ft.app.matcha.web.form.ForgotForm;
 import ft.app.matcha.web.form.LoginForm;
 import ft.app.matcha.web.form.LogoutForm;
 import ft.app.matcha.web.form.RefreshForm;
 import ft.app.matcha.web.form.RegisterForm;
 import ft.app.matcha.web.form.ResetPasswordForm;
+import ft.app.matcha.web.form.TokenForm;
 import ft.framework.mvc.annotation.Authenticated;
 import ft.framework.mvc.annotation.Body;
 import ft.framework.mvc.annotation.Controller;
@@ -100,20 +101,20 @@ public class AuthController {
 		}
 	}
 	
-	@PostMapping(path = "/confirm")
+	@PostMapping(path = "/confirm-email")
 	@ApiOperation(summary = "Confirm an account.")
-	public void confirm(
-		@Body @Valid ConfirmForm form
+	public void confirmEmail(
+		@Body @Valid TokenForm form
 	) {
-		authService.confirm(form.getToken());
+		authService.confirmEmail(form.getToken());
 	}
 	
-	@PostMapping(path = "/forgot")
+	@PostMapping(path = "/forgot-password")
 	@ApiOperation(summary = "Send a 'forgot password' email.")
-	public void forgot(
+	public void forgotPassword(
 		@Body @Valid ForgotForm form
 	) {
-		authService.forgot(form.getEmail());
+		authService.forgotPassword(form.getEmail());
 	}
 	
 	@PostMapping(path = "/change-password")
@@ -128,6 +129,26 @@ public class AuthController {
 		}
 		
 		authService.changePassword(user, form.getOldPassword(), form.getNewPassword());
+	}
+	
+	@PostMapping(path = "/change-email")
+	@ApiOperation(summary = "Change your email.")
+	@Authenticated
+	public void changeEmail(
+		@Body @Valid ChangeEmailForm form,
+		@Principal User user
+	) {
+		authService.changeEmail(user, form.getNewEmail());
+	}
+	
+	@PostMapping(path = "/confirm-new-email")
+	@ApiOperation(summary = "Confirm your new email.")
+	@Authenticated
+	public void confirmNewEmail(
+		@Body @Valid TokenForm form,
+		@Principal User user
+	) {
+		authService.confirmNewEmail(form.getToken());
 	}
 	
 	@PostMapping(path = "/reset-password")

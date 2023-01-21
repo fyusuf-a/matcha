@@ -54,12 +54,12 @@ public class EmailSender {
 	}
 	
 	public boolean sendConfirmationEmail(Token token) {
-		token.assertType(Token.Type.EMAIL);
+		token.assertType(Token.Type.CONFIRM);
 		
 		final var user = token.getUser();
 		final var plain = getPlain(token);
 		
-		final var url = "http://localhost:3000/auth/confirm?token=%s".formatted(plain);
+		final var url = "http://localhost:3000/auth/confirm-email?token=%s".formatted(plain);
 		
 		final var properties = Map.of(
 			"url", url,
@@ -85,6 +85,24 @@ public class EmailSender {
 		);
 		
 		return sendEmail("forgot", user.getEmail(), properties);
+	}
+	
+	public boolean sendChangeEmail(Token token, String newEmail) {
+		token.assertType(Token.Type.EMAIL);
+		
+		final var user = token.getUser();
+		final var plain = getPlain(token);
+		
+		final var url = "http://localhost:3000/auth/change-email?token=%s".formatted(plain);
+		
+		final var properties = Map.of(
+			"url", url,
+			"firstName", user.getFirstName(),
+			"newEmail", newEmail,
+			"expireAt", formatDate(token.getExpireAt())
+		);
+		
+		return sendEmail("new-email", newEmail, properties);
 	}
 	
 	public boolean sendEmail(String templateName, String email, Map<?, ?> properties) {

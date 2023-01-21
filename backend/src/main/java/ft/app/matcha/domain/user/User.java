@@ -41,7 +41,6 @@ public class User {
 	private String password;
 	
 	@Column(nullable = false, unique = true)
-	@JsonIgnore
 	private String email;
 	
 	@Column(nullable = false)

@@ -2,6 +2,7 @@ package ft.app.matcha.domain.auth;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -28,11 +29,16 @@ public class TokenService {
 	}
 	
 	public Token create(Token.Type type, User user) {
+		return create(type, user, null);
+	}
+	
+	public Token create(Token.Type type, User user, String extra) {
 		if (type.isUnique()) {
 			repository.deleteAllByUser(user);
 		}
 		
 		final var configuration = configurations.get(type);
+		Objects.requireNonNull(configuration, () -> "no token configuration for type: " + type);
 		
 		final var plain = RandomStringUtils.randomAlphanumeric(configuration.getLength());
 		final var encoded = encode(plain);
@@ -45,6 +51,7 @@ public class TokenService {
 			.setUser(user)
 			.setEncoded(encoded)
 			.setPlain(plain)
+			.setExtra(extra)
 			.setCreatedAt(createdAt)
 			.setExpireAt(expiredAt)
 		);
@@ -56,18 +63,11 @@ public class TokenService {
 		return repository.findByTypeAndEncoded(type, encoded);
 	}
 	
-	public Optional<User> validate(Token.Type type, String plain) {
+	public Optional<Token> validate(Token.Type type, String plain) {
 		final var token = find(type, plain);
+		token.ifPresent(this::validate);
 		
-		if (token.isEmpty()) {
-			return Optional.empty();
-		}
-		
-		final var user = token.get().getUser();
-		
-		validate(token.get());
-		
-		return Optional.of(user);
+		return token;
 	}
 	
 	public void validate(Token token) {
@@ -90,9 +90,10 @@ public class TokenService {
 	
 	public static Map<Token.Type, TokenConfiguration> createTokenConfigurations(AuthConfigurationProperties properties) {
 		return Map.ofEntries(
-			Map.entry(Token.Type.EMAIL, new TokenConfiguration(properties.getEmailTokenLength(), properties.getEmailTokenExpiration())),
+			Map.entry(Token.Type.CONFIRM, new TokenConfiguration(properties.getConfirmEmailTokenLength(), properties.getConfirmEmailTokenExpiration())),
 			Map.entry(Token.Type.REFRESH, new TokenConfiguration(properties.getRefreshTokenLength(), properties.getRefreshTokenExpiration())),
-			Map.entry(Token.Type.PASSWORD, new TokenConfiguration(properties.getPasswordTokenLength(), properties.getPasswordTokenExpiration()))
+			Map.entry(Token.Type.PASSWORD, new TokenConfiguration(properties.getPasswordTokenLength(), properties.getPasswordTokenExpiration())),
+			Map.entry(Token.Type.EMAIL, new TokenConfiguration(properties.getNewEmailTokenLength(), properties.getNewEmailTokenExpiration()))
 		);
 	}
 	
