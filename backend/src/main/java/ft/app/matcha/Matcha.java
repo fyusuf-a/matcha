@@ -195,7 +195,7 @@ public class Matcha {
 			final var relationshipService = new RelationshipService(relationshipRepository, eventPublisher);
 			final var tagService = new TagService(tagRepository);
 			final var userTagService = new UserTagService(userTagRepository, matchaConfiguration);
-			final var messageService = new MessageService(messageRepository, eventPublisher);
+			final var messageService = new MessageService(messageRepository, eventPublisher, relationshipService);
 			final var jwtAuthenticator = new JwtAuthenticator(jwtService);
 			final var webSocketService = new WebSocketController(webSocket, jwtAuthenticator);
 			final var reportService = new ReportService(reportRepository, eventPublisher);
