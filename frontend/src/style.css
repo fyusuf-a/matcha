@@ -30,7 +30,6 @@
   }
 
   form {
-    @apply border-gray-300 bg-red-300 rounded-md shadow-md;
     @apply flex flex-col space-y-6 items-center;
   }
 }
