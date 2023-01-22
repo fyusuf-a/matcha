@@ -128,8 +128,16 @@ public class RelationshipService {
 		return repository.existsByUserAndPeerAndType(user, peer, Relationship.Type.BLOCK);
 	}
 	
+	public boolean isLiked(User user, User peer) {
+		return repository.existsByUserAndPeerAndType(user, peer, Relationship.Type.LIKE);
+	}
+	
 	public boolean isMutual(Relationship relationship) {
 		return repository.existsByUserAndPeerAndType(relationship.getUser(), relationship.getPeer(), relationship.getType());
+	}
+	
+	public boolean areConnected(User user, User peer) {
+		return isLiked(user, peer) && isLiked(peer, user);
 	}
 	
 	@EventListener

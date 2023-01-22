@@ -5,22 +5,26 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 import ft.app.matcha.configuration.HeartbeatConfigurationProperties;
+import ft.app.matcha.domain.heartbeat.event.HeartbeatEvent;
 import ft.app.matcha.domain.user.User;
+import ft.framework.event.ApplicationEventPublisher;
 
 public class HeartbeatService {
 	
 	private final HeartbeatRepository repository;
-	private final IPLocationService locationService;
+	private final IpLocationResolverService ipLocationResolverService;
+	private final ApplicationEventPublisher eventPublisher;
 	private final Duration availabilityTimeout;
 	
-	public HeartbeatService(HeartbeatRepository repository, IPLocationService locationService, HeartbeatConfigurationProperties properties) {
+	public HeartbeatService(HeartbeatRepository repository, IpLocationResolverService ipLocationResolverService, ApplicationEventPublisher eventPublisher, HeartbeatConfigurationProperties properties) {
 		this.repository = repository;
-		this.locationService = locationService;
+		this.ipLocationResolverService = ipLocationResolverService;
+		this.eventPublisher = eventPublisher;
 		this.availabilityTimeout = properties.getAvailabilityTimeout();
 	}
 	
 	public Heartbeat log(User user, InetAddress inetAddress) {
-		final var resolved = locationService.resolve(inetAddress);
+		final var resolved = ipLocationResolverService.resolve(inetAddress);
 		
 		final var heartbeat = repository.findByUser(user)
 			.orElseGet(() -> new Heartbeat()
@@ -37,7 +41,11 @@ public class HeartbeatService {
 				.setCountry(location.country());
 		});
 		
-		return repository.save(heartbeat);
+		repository.save(heartbeat);
+		
+		eventPublisher.publishEvent(new HeartbeatEvent(this, heartbeat));
+		
+		return heartbeat;
 	}
 	
 	public Presence getPresence(User user) {

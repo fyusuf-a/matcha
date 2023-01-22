@@ -19,11 +19,14 @@ public class AuthConfigurationProperties {
 	private int refreshTokenLength = 128;
 	private Duration refreshTokenExpiration = Duration.ofDays(7);
 	
-	private int emailTokenLength = 128;
-	private Duration emailTokenExpiration = Duration.ofDays(1);
+	private int confirmEmailTokenLength = 128;
+	private Duration confirmEmailTokenExpiration = Duration.ofDays(1);
 	
 	private int passwordTokenLength = 128;
 	private Duration passwordTokenExpiration = Duration.ofHours(1);
+	
+	private int newEmailTokenLength = 128;
+	private Duration newEmailTokenExpiration = Duration.ofHours(1);
 	
 	private String oauthClientId;
 	private String oauthClientSecret;

@@ -12,6 +12,8 @@ import ft.app.matcha.configuration.DatabaseConfigurationProperties;
 import ft.app.matcha.configuration.EmailConfigurationProperties;
 import ft.app.matcha.configuration.HeartbeatConfigurationProperties;
 import ft.app.matcha.configuration.MatchaConfigurationProperties;
+import ft.app.matcha.configuration.SwaggerConfigurationProperties;
+import ft.app.matcha.configuration.UrlConfigurationProperties;
 import ft.app.matcha.domain.auth.AuthService;
 import ft.app.matcha.domain.auth.EmailSender;
 import ft.app.matcha.domain.auth.JwtService;
@@ -22,7 +24,10 @@ import ft.app.matcha.domain.auth.TokenService;
 import ft.app.matcha.domain.heartbeat.Heartbeat;
 import ft.app.matcha.domain.heartbeat.HeartbeatRepository;
 import ft.app.matcha.domain.heartbeat.HeartbeatService;
-import ft.app.matcha.domain.heartbeat.IPLocationService;
+import ft.app.matcha.domain.heartbeat.IpLocationResolverService;
+import ft.app.matcha.domain.location.Location;
+import ft.app.matcha.domain.location.LocationRepository;
+import ft.app.matcha.domain.location.LocationService;
 import ft.app.matcha.domain.message.Message;
 import ft.app.matcha.domain.message.MessageRepository;
 import ft.app.matcha.domain.message.MessageService;
@@ -59,6 +64,7 @@ import ft.app.matcha.web.AuthController;
 import ft.app.matcha.web.BlockController;
 import ft.app.matcha.web.HeartbeatController;
 import ft.app.matcha.web.LikeController;
+import ft.app.matcha.web.LocationController;
 import ft.app.matcha.web.MessageController;
 import ft.app.matcha.web.NotificationController;
 import ft.app.matcha.web.PictureController;
@@ -68,6 +74,7 @@ import ft.app.matcha.web.UserController;
 import ft.app.matcha.web.UserTagController;
 import ft.app.matcha.web.VisitController;
 import ft.app.matcha.web.WebSocketController;
+import ft.app.matcha.web.map.LocationMapper;
 import ft.app.matcha.web.map.PictureMapper;
 import ft.app.matcha.web.map.ReportMapper;
 import ft.app.matcha.web.map.UserMapper;
@@ -110,6 +117,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
@@ -146,6 +154,8 @@ public class Matcha {
 			final var emailConfiguration = propertyBinder.bind(new EmailConfigurationProperties());
 			final var matchaConfiguration = propertyBinder.bind(new MatchaConfigurationProperties());
 			final var heartbeatConfiguration = propertyBinder.bind(new HeartbeatConfigurationProperties());
+			final var swaggerConfiguration = propertyBinder.bind(new SwaggerConfigurationProperties());
+			final var urlConfiguration = propertyBinder.bind(new UrlConfigurationProperties());
 			
 			final var ormConfiguration = configureOrm(databaseConfiguration, new Class<?>[] {
 				User.class,
@@ -161,6 +171,7 @@ public class Matcha {
 				Relationship.class,
 				Visit.class,
 				Heartbeat.class,
+				Location.class,
 			});
 			
 			final var webSocket = WebSocketHandler.create(objectMapper);
@@ -180,8 +191,9 @@ public class Matcha {
 			final var relationshipRepository = new RelationshipRepository(ormConfiguration.getEntityManager());
 			final var visitRepository = new VisitRepository(ormConfiguration.getEntityManager());
 			final var heartbeatRepository = new HeartbeatRepository(ormConfiguration.getEntityManager());
+			final var locationRepository = new LocationRepository(ormConfiguration.getEntityManager());
 			
-			final var emailSender = new EmailSender(emailConfiguration);
+			final var emailSender = new EmailSender(emailConfiguration, urlConfiguration);
 			
 			final var userService = new UserService(userRepository, matchaConfiguration);
 			final var jwtService = new JwtService(userRepository, authConfiguration);
@@ -192,14 +204,15 @@ public class Matcha {
 			final var relationshipService = new RelationshipService(relationshipRepository, eventPublisher);
 			final var tagService = new TagService(tagRepository);
 			final var userTagService = new UserTagService(userTagRepository, matchaConfiguration);
-			final var messageService = new MessageService(messageRepository, eventPublisher);
+			final var messageService = new MessageService(messageRepository, eventPublisher, relationshipService);
 			final var jwtAuthenticator = new JwtAuthenticator(jwtService);
 			final var webSocketService = new WebSocketController(webSocket, jwtAuthenticator);
 			final var reportService = new ReportService(reportRepository, eventPublisher);
 			final var notificationService = new NotificationService(notificationRepository, relationshipService, eventPublisher);
 			final var visitService = new VisitService(visitRepository, eventPublisher);
-			final var ipLocationService = new IPLocationService(httpClient, heartbeatConfiguration);
-			final var heartbeatService = new HeartbeatService(heartbeatRepository, ipLocationService, heartbeatConfiguration);
+			final var ipLocationService = new IpLocationResolverService(httpClient, heartbeatConfiguration);
+			final var heartbeatService = new HeartbeatService(heartbeatRepository, ipLocationService, eventPublisher, heartbeatConfiguration);
+			final var locationService = new LocationService(locationRepository);
 			
 			final var services = Arrays.asList(new Object[] {
 				userService,
@@ -216,6 +229,7 @@ public class Matcha {
 				visitService,
 				ipLocationService,
 				heartbeatService,
+				locationService,
 			});
 			
 			final var eventListenerFactory = new EventListenerFactory(eventPublisher);
@@ -223,9 +237,10 @@ public class Matcha {
 			
 			final var scheduledFactory = new ScheduledFactory(taskScheduler);
 			services.forEach(scheduledFactory::scan);
-			
+
+			final var locationMapper = new LocationMapper();
 			final var pictureMapper = new PictureMapper(pictureService);
-			final var userMapper = new UserMapper(relationshipService, pictureService, pictureMapper, heartbeatService);
+			final var userMapper = new UserMapper(relationshipService, pictureService, pictureMapper, heartbeatService, locationService, locationMapper);
 			final var reportMapper = new ReportMapper(userMapper);
 			final var visitMapper = new VisitMapper(userMapper);
 			
@@ -244,6 +259,7 @@ public class Matcha {
 			routeRegistry.add(new BlockController(relationshipService, userService, userMapper));
 			routeRegistry.add(new VisitController(visitService, userService, visitMapper));
 			routeRegistry.add(new HeartbeatController(heartbeatService));
+			routeRegistry.add(new LocationController(locationService, userService, locationMapper));
 			
 			final var swagger = new OpenAPI()
 				.schemaRequirement("JWT", new SecurityScheme()
@@ -253,6 +269,12 @@ public class Matcha {
 				.info(new Info()
 					.title("Matcha")
 					.version("1.0"));
+			
+			swagger.addServersItem(
+				new Server()
+					.description(swaggerConfiguration.getServerName())
+					.url(swaggerConfiguration.getServerUrl())
+			);
 			
 			SwaggerBuilder.build(swagger, routeRegistry.getRoutes());
 			routeRegistry.add(new SwaggerController(swagger));

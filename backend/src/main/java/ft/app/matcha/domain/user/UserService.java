@@ -66,6 +66,10 @@ public class UserService {
 		return repository.findByEmail(email);
 	}
 	
+	public boolean exists(String email) {
+		return repository.existsByEmail(email);
+	}
+	
 	public Optional<User> find(String login, String password) {
 		return repository.findByLoginAndPassword(login, password);
 	}
@@ -110,7 +114,7 @@ public class UserService {
 		int onLike,
 		int onUnlike,
 		int onBlock,
-		int onReport) {
-	}
+		int onReport
+	) {}
 	
 }

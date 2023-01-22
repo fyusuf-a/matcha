@@ -6,11 +6,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.apache.tika.Tika;
+
 import ft.app.matcha.configuration.MatchaConfigurationProperties;
 import ft.app.matcha.domain.picture.exception.MaximumPictureCountException;
+import ft.app.matcha.domain.picture.exception.MimeTypeNotAcceptedException;
 import ft.app.matcha.domain.user.User;
 import ft.framework.mvc.domain.Page;
 import ft.framework.mvc.domain.Pageable;
@@ -26,6 +32,8 @@ public class PictureService {
 	private final OkHttpClient httpClient;
 	private final long maxPictureCount;
 	private final String storage;
+	private final List<String> acceptedMimeTypes;
+	private final Tika tika;
 	
 	public PictureService(PictureRepository repository, DefaultPictureRepository defaultRepository, OkHttpClient httpClient, MatchaConfigurationProperties matchaConfigurationProperties) {
 		this.repository = repository;
@@ -33,6 +41,8 @@ public class PictureService {
 		this.httpClient = httpClient;
 		this.maxPictureCount = matchaConfigurationProperties.getMaximumPictureCount();
 		this.storage = matchaConfigurationProperties.getPictureStorage();
+		this.acceptedMimeTypes = createAcceptedMimeTypeList(matchaConfigurationProperties.isAnimatedPictureAllowed());
+		this.tika = new Tika();
 	}
 	
 	public Page<Picture> findAll(User user, Pageable pageable) {
@@ -64,7 +74,15 @@ public class PictureService {
 			throw new MaximumPictureCountException(maxPictureCount);
 		}
 		
-		final var path = store(bytes);
+		final var mimeType = tika.detect(bytes);
+		if (!acceptedMimeTypes.contains(mimeType)) {
+			throw new MimeTypeNotAcceptedException(mimeType, acceptedMimeTypes);
+		}
+		
+		/* safe since its only images */
+		final var extension = mimeType.split("/")[1];
+		
+		final var path = store(bytes, extension);
 		
 		return repository.save(
 			new Picture()
@@ -91,12 +109,13 @@ public class PictureService {
 	}
 	
 	@SneakyThrows
-	public String store(byte[] bytes) {
-		final var path = Paths.get(storage, UUID.randomUUID().toString());
+	public String store(byte[] bytes, String extension) {
+		final var path = "%s.%s".formatted(UUID.randomUUID(), extension);
+		final var dataPath = Paths.get(storage, path);
 		
-		Files.write(path, bytes);
+		Files.write(dataPath, bytes);
 		
-		return path.toString();
+		return path;
 	}
 	
 	public boolean hasReachedMaximum(User user) {
@@ -118,7 +137,21 @@ public class PictureService {
 	}
 	
 	public Path toPath(Picture picture) {
-		return Paths.get(picture.getPath());
+		return Paths.get(storage, picture.getPath());
+	}
+	
+	public static List<String> createAcceptedMimeTypeList(boolean animatedAllowed) {
+		final var list = new ArrayList<String>();
+		list.add("image/jpeg");
+		list.add("image/png");
+		list.add("image/webp");
+		
+		if (animatedAllowed) {
+			list.add("image/apng");
+			list.add("image/gif");
+		}
+		
+		return Collections.unmodifiableList(list);
 	}
 	
 }

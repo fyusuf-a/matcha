@@ -19,14 +19,15 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import spark.utils.StringUtils;
 
 @Slf4j
-public class IPLocationService {
+public class IpLocationResolverService {
 	
 	private final DatabaseReader reader;
 	
 	@SneakyThrows
-	public IPLocationService(OkHttpClient httpClient, HeartbeatConfigurationProperties properties) {
+	public IpLocationResolverService(OkHttpClient httpClient, HeartbeatConfigurationProperties properties) {
 		final var file = new File(properties.getMaxmindGeoIpDatabasePath());
 		if (!file.exists()) {
 			download(httpClient, file, properties.getMaxmindLicenseKey());
@@ -36,9 +37,9 @@ public class IPLocationService {
 	}
 	
 	@SneakyThrows
-	public Optional<Location> resolve(InetAddress inetAddress) {
+	public Optional<IpLocation> resolve(InetAddress inetAddress) {
 		return reader.tryCity(inetAddress)
-			.map((response) -> new Location(
+			.map((response) -> new IpLocation(
 				response.getCountry().getName(),
 				response.getCity().getName(),
 				response.getLocation().getLatitude(),
@@ -49,6 +50,10 @@ public class IPLocationService {
 	@SneakyThrows
 	public static void download(OkHttpClient httpClient, File destination, String licenseKey) {
 		log.info("Downloading GeoIP database from MAXMIND's servers...");
+		
+		if (StringUtils.isBlank(licenseKey)) {
+			throw new IllegalArgumentException("no license key provided");
+		}
 		
 		final var call = httpClient.newCall(new Request.Builder()
 			.get()

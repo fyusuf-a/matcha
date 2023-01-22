@@ -15,8 +15,6 @@ import java.util.function.Supplier;
 
 import javax.servlet.http.Part;
 
-import org.apache.commons.lang3.ClassUtils;
-
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionLikeType;
@@ -30,6 +28,7 @@ import io.swagger.v3.oas.models.media.BooleanSchema;
 import io.swagger.v3.oas.models.media.DateSchema;
 import io.swagger.v3.oas.models.media.DateTimeSchema;
 import io.swagger.v3.oas.models.media.IntegerSchema;
+import io.swagger.v3.oas.models.media.NumberSchema;
 import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
@@ -43,9 +42,16 @@ public class SchemaBuilder {
 	static {
 		final var builders = new HashMap<Class<?>, Supplier<Schema<?>>>();
 		
-		builders.put(Long.class, () -> new IntegerSchema().format("int64"));
-		builders.put(Integer.class, IntegerSchema::new);
-		builders.put(Boolean.class, BooleanSchema::new);
+		builders.put(long.class, () -> new IntegerSchema().format("int64"));
+		builders.put(Long.class, nullable(builders.get(long.class)));
+		builders.put(int.class, IntegerSchema::new);
+		builders.put(Integer.class, nullable(builders.get(int.class)));
+		builders.put(boolean.class, BooleanSchema::new);
+		builders.put(Boolean.class, nullable(builders.get(boolean.class)));
+		builders.put(float.class, () -> new NumberSchema().format("float"));
+		builders.put(Float.class, nullable(builders.get(float.class)));
+		builders.put(double.class, () -> new NumberSchema().format("double"));
+		builders.put(Double.class, nullable(builders.get(double.class)));
 		builders.put(UUID.class, UUIDSchema::new);
 		builders.put(String.class, StringSchema::new);
 		builders.put(LocalDate.class, DateSchema::new);
@@ -55,6 +61,15 @@ public class SchemaBuilder {
 		builders.put(Part.class, () -> new BinarySchema());
 		
 		SCHEMA_BUILDERS = Collections.unmodifiableMap(builders);
+	}
+	
+	public static Supplier<Schema<?>> nullable(Supplier<Schema<?>> supplier) {
+		return () -> {
+			final var schema = supplier.get();
+			schema.setNullable(true);
+			
+			return schema;
+		};
 	}
 	
 	public static Optional<Schema<?>> build(OpenAPI swagger, Type type) {
@@ -79,7 +94,7 @@ public class SchemaBuilder {
 				return Optional.of(schema);
 			}
 		} else if (type instanceof SimpleType simpleType) {
-			final Class<?> clazz = ClassUtils.primitiveToWrapper(simpleType.getRawClass());
+			final Class<?> clazz = simpleType.getRawClass();
 			
 			if (void.class.equals(clazz)) {
 				return Optional.empty();

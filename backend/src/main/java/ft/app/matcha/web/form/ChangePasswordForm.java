@@ -9,9 +9,15 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ConfirmForm {
+public class ChangePasswordForm {
 	
 	@NotBlank
-	private String token;
+	private String oldPassword;
+	
+	@NotBlank
+	private String newPassword;
+	
+	@NotBlank
+	private String confirmPassword;
 	
 }

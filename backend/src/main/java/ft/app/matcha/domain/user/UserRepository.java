@@ -40,4 +40,8 @@ public class UserRepository extends Repository<User, Long> {
 		return findAllBy(builder.equals(User.Fields.gender, Gender.MAN));
 	}
 	
+	public boolean existsByEmail(String email) {
+		return existsBy(builder.equals(User.Fields.email, email));
+	}
+	
 }

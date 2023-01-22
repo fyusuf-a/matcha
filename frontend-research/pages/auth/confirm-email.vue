@@ -31,7 +31,7 @@ export default defineComponent({
     useFetch(async () => {
       try {
         await $axios.$post(
-          '/api/auth/confirm',
+          '/api/auth/confirm-email',
           {
             token: token.value,
           }

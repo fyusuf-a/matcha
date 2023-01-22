@@ -5,11 +5,14 @@ import java.time.LocalDateTime;
 import org.apache.commons.lang3.StringUtils;
 
 import ft.app.matcha.domain.auth.event.RegisterEvent;
+import ft.app.matcha.domain.auth.exception.InvalidPasswordException;
 import ft.app.matcha.domain.auth.exception.InvalidTokenException;
+import ft.app.matcha.domain.auth.exception.SameEmailException;
 import ft.app.matcha.domain.auth.exception.WrongLoginOrPasswordException;
 import ft.app.matcha.domain.picture.PictureService;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserService;
+import ft.app.matcha.domain.user.exception.EmailAlreadyUsedException;
 import ft.framework.event.ApplicationEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +43,7 @@ public class AuthService {
 		
 		eventPublisher.publishEvent(new RegisterEvent(this, user));
 		
-		final var token = tokenService.create(Token.Type.EMAIL, user);
+		final var token = tokenService.create(Token.Type.CONFIRM, user);
 		emailSender.sendConfirmationEmail(token);
 		
 		return createTokens(user);
@@ -48,6 +51,7 @@ public class AuthService {
 	
 	public Tokens refresh(String refreshToken) {
 		return tokenService.validate(Token.Type.REFRESH, refreshToken)
+			.map(Token::getUser)
 			.map(this::createTokens)
 			.orElseThrow(() -> new InvalidTokenException(Token.Type.REFRESH));
 	}
@@ -57,9 +61,10 @@ public class AuthService {
 			.orElseThrow(() -> new InvalidTokenException(Token.Type.REFRESH));
 	}
 	
-	public void confirm(String confirmToken) {
-		final var user = tokenService.validate(Token.Type.EMAIL, confirmToken)
-			.orElseThrow(() -> new InvalidTokenException(Token.Type.EMAIL));
+	public void confirmEmail(String confirmToken) {
+		final var user = tokenService.validate(Token.Type.CONFIRM, confirmToken)
+			.map(Token::getUser)
+			.orElseThrow(() -> new InvalidTokenException(Token.Type.CONFIRM));
 		
 		userService.save(user
 			.setEmailConfirmed(true)
@@ -67,14 +72,56 @@ public class AuthService {
 		);
 	}
 	
-	public void forgot(String email) {
+	public void forgotPassword(String email) {
 		userService.find(email)
 			.map((user) -> tokenService.create(Token.Type.PASSWORD, user))
 			.ifPresent(emailSender::sendPasswordResetEmail);
 	}
 	
+	public void changePassword(User user, String oldPassword, String newPassword) {
+		final var oldEncoded = encode(oldPassword);
+		if (!oldEncoded.equals(user.getPassword())) {
+			throw new InvalidPasswordException();
+		}
+		
+		final var encoded = encode(newPassword);
+		userService.save(user.setPassword(encoded));
+	}
+	
+	public void changeEmail(User user, String newEmail) {
+		if (user.getEmail().equalsIgnoreCase(newEmail)) {
+			throw new SameEmailException();
+		}
+		
+		if (userService.exists(newEmail)) {
+			throw new EmailAlreadyUsedException(newEmail);
+		}
+		
+		final var token = tokenService.create(Token.Type.EMAIL, user, newEmail);
+		emailSender.sendChangeEmail(token, newEmail);
+	}
+	
+	public void confirmNewEmail(String emailToken) {
+		final var token = tokenService.validate(Token.Type.EMAIL, emailToken)
+			.orElseThrow(() -> new InvalidTokenException(Token.Type.EMAIL));
+		
+		final var user = token.getUser();
+		final var newEmail = token.getExtra();
+		
+		if (userService.exists(newEmail)) {
+			throw new EmailAlreadyUsedException(newEmail);
+		}
+		
+		userService.save(user
+			.setEmail(newEmail)
+			.setEmailConfirmed(true)
+			.setEmailConfirmedAt(LocalDateTime.now())
+		);
+	}
+	
 	public void resetPassword(String passwordToken, String password) {
 		final var user = tokenService.validate(Token.Type.PASSWORD, passwordToken)
+			.map(Token::getUser)
 			.orElseThrow(() -> new InvalidTokenException(Token.Type.PASSWORD));
 		
 		final var encoded = encode(password);
@@ -88,7 +135,7 @@ public class AuthService {
 	public Tokens validateOAuthCode(String code) {
 		final var idToken = oAuthService.getIdToken(code);
 		final var oauthUser = oAuthService.getUser(idToken);
-
+		
 		final var optional = userService.find(oauthUser.email());
 		if (optional.isPresent()) {
 			return createTokens(optional.get());

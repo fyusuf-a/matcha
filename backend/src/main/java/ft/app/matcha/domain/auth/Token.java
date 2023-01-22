@@ -51,6 +51,9 @@ public class Token {
 	
 	@Transient
 	private String plain;
+
+	@Column(length = 1024)
+	private String extra;
 	
 	@Column(nullable = false)
 	private LocalDateTime expireAt;
@@ -68,12 +71,13 @@ public class Token {
 	@AllArgsConstructor
 	public enum Type {
 		
-		EMAIL(true),
+		CONFIRM(true),
 		REFRESH(false),
-		PASSWORD(true);
+		PASSWORD(true),
+		EMAIL(true);
 		
 		private final boolean unique;
-	
+		
 	}
 	
 }

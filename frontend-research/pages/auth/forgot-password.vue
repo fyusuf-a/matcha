@@ -47,7 +47,7 @@ export default defineComponent({
       try {
         loading.value = true
 
-        await $axios.post('/api/auth/forgot', inputs)
+        await $axios.post('/api/auth/forgot-password', inputs)
 
         $dialog.notify.success(
           'An email will be sent if there is an account with this email.'

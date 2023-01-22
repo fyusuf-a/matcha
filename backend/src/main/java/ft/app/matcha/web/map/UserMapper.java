@@ -1,6 +1,7 @@
 package ft.app.matcha.web.map;
 
 import ft.app.matcha.domain.heartbeat.HeartbeatService;
+import ft.app.matcha.domain.location.LocationService;
 import ft.app.matcha.domain.picture.DefaultPicture;
 import ft.app.matcha.domain.picture.PictureService;
 import ft.app.matcha.domain.relationship.RelationshipService;
@@ -16,6 +17,8 @@ public class UserMapper {
 	private final PictureService pictureService;
 	private final PictureMapper pictureMapper;
 	private final HeartbeatService heartbeatService;
+	private final LocationService locationService;
+	private final LocationMapper locationMapper;
 	
 	public UserDto toDto(User user) {
 		final var picture = pictureService.getDefault(user)
@@ -24,6 +27,7 @@ public class UserMapper {
 			.orElse(null);
 		
 		final var presence = heartbeatService.getPresence(user);
+		final var location = locationMapper.toDto(locationService.find(user));
 		
 		return new UserDto()
 			.setId(user.getId())
@@ -36,6 +40,7 @@ public class UserMapper {
 			.setFame(user.getFame())
 			.setEmailConfirmed(user.isEmailConfirmed())
 			.setPicture(picture)
+			.setLocation(location)
 			.setPresence(presence);
 	}
 	
