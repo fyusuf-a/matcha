@@ -1,5 +1,7 @@
 package ft.app.matcha.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import ft.app.matcha.domain.heartbeat.Presence;
 import ft.app.matcha.domain.user.Gender;
 import ft.app.matcha.domain.user.SexualOrientation;
@@ -12,6 +14,10 @@ public class UserDto {
 	
 	private long id;
 	private String login;
+	
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	private String email;
+	
 	private String firstName;
 	private String lastName;
 	private String biography;

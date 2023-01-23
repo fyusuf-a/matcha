@@ -5,6 +5,7 @@ import ft.app.matcha.domain.auth.Tokens;
 import ft.app.matcha.domain.auth.exception.InvalidConfirmPasswordException;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.security.jwt.JwtCookieAuthenticationFilter;
+import ft.app.matcha.web.dto.UserDto;
 import ft.app.matcha.web.form.ChangeEmailForm;
 import ft.app.matcha.web.form.ChangePasswordForm;
 import ft.app.matcha.web.form.ForgotForm;
@@ -14,6 +15,7 @@ import ft.app.matcha.web.form.RefreshForm;
 import ft.app.matcha.web.form.RegisterForm;
 import ft.app.matcha.web.form.ResetPasswordForm;
 import ft.app.matcha.web.form.TokenForm;
+import ft.app.matcha.web.map.UserMapper;
 import ft.framework.mvc.annotation.Authenticated;
 import ft.framework.mvc.annotation.Body;
 import ft.framework.mvc.annotation.Controller;
@@ -35,14 +37,16 @@ import spark.utils.StringUtils;
 public class AuthController {
 	
 	private final AuthService authService;
+	private final UserMapper userMapper;
 	
 	@GetMapping(path = "/self")
 	@Authenticated
 	@ApiOperation(summary = "Show authenticated principal.")
-	public User self(
+	public UserDto self(
 		@Principal User principal
 	) {
-		return principal;
+		return userMapper.toDto(principal)
+			.setEmail(principal.getEmail());
 	}
 	
 	@PostMapping(path = "/login")

@@ -262,7 +262,7 @@ public class Matcha {
 			final var mvcConfiguration = configureMvc(objectMapper, validator, convertionService, jwtAuthenticator, authService);
 			final var routeRegistry = new RouteRegistry(mvcConfiguration);
 			
-			routeRegistry.add(new AuthController(authService));
+			routeRegistry.add(new AuthController(authService, userMapper));
 			routeRegistry.add(new PictureController(userService, pictureService, pictureMapper));
 			routeRegistry.add(new UserController(userService, userMapper));
 			routeRegistry.add(new LikeController(relationshipService, userService, userMapper));
