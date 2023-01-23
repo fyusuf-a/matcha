@@ -18,9 +18,17 @@ import org.apache.commons.lang3.reflect.MethodUtils;
 import ft.framework.mvc.Problem;
 import ft.framework.mvc.annotation.ResponseErrorProperty;
 import ft.framework.mvc.annotation.ResponseStatus;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class DefaultHandlerExceptionResolver implements HandlerExceptionResolver {
+	
+	private boolean debug;
 	
 	@Override
 	public Problem resolveException(HttpServletRequest request, HttpServletResponse response, Exception exception) {
@@ -44,9 +52,11 @@ public class DefaultHandlerExceptionResolver implements HandlerExceptionResolver
 			builder.properties(properties);
 		}
 		
-		final var trace = resolveTrace(exception);
-		if (!properties.isEmpty()) {
-			builder.trace(trace);
+		if (debug) {
+			final var trace = resolveTrace(exception);
+			if (!properties.isEmpty()) {
+				builder.trace(trace);
+			}
 		}
 		
 		return builder.build();

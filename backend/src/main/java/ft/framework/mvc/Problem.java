@@ -27,7 +27,7 @@ public class Problem {
 	@JsonInclude(JsonInclude.Include.NON_EMPTY)
 	private final Map<String, Object> properties;
 	
-	@JsonInclude(JsonInclude.Include.NON_EMPTY)
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	private final List<String> trace;
 	
 }

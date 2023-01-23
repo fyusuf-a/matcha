@@ -24,4 +24,6 @@ public class MatchaConfigurationProperties {
 	private int fameOnBlock = -1;
 	private int fameOnReport = -3;
 	
+	private boolean debug = true;
+	
 }

@@ -99,6 +99,7 @@ import ft.framework.mvc.resolver.argument.impl.QueryHandlerMethodArgumentResolve
 import ft.framework.mvc.resolver.argument.impl.RequestHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.ResponseHandlerMethodArgumentResolver;
 import ft.framework.mvc.resolver.argument.impl.VariableHandlerMethodArgumentResolver;
+import ft.framework.mvc.resolver.exception.DefaultHandlerExceptionResolver;
 import ft.framework.mvc.security.CompositeAuthenticationFilter;
 import ft.framework.orm.EntityManager;
 import ft.framework.orm.OrmConfiguration;
@@ -361,6 +362,7 @@ public class Matcha {
 				.filter(new JwtCookieAuthenticationFilter(jwtAuthenticator, authService))
 				.build())
 			.filter(new LoggingFilter())
+			.exceptionResolver(new DefaultHandlerExceptionResolver())
 			.build();
 	}
 	
