@@ -1,9 +1,11 @@
 <script lang="ts" setup>
 import { onBeforeMount, ref } from 'vue';
 import { useMatchaStore } from '@/store';
-import axios from 'axios';
+import axios, { Axios } from 'axios';
+import { AxiosError } from 'axios';
 import { useRouter } from 'vue-router';
 import BaseCard from '@/components/BaseCard.vue';
+import { Form, Field, ErrorMessage } from 'vee-validate';
 
 const store = useMatchaStore();
 
@@ -11,13 +13,38 @@ const userName = ref('');
 const password = ref('');
 const router = useRouter();
 
-async function login() {
-  let res = await axios.post('/api/auth/login', {
-    login: userName.value,
-    password: password.value,
-  })
-  store.id = res.data.id;
-  router.push('/');
+async function onSubmit() {
+  try {
+    let res = await axios.post('/api/auth/login', {
+      login: userName.value,
+      password: password.value,
+    })
+    store.id = res.data.id;
+    router.push('/');
+  } catch (err: any) {
+    console.error(err.message);
+  }
+}
+
+function validatePassword(value: any) {
+  if (!value) {
+    return 'Password is required';
+  }
+  if (value.match(/^\s+$/)) {
+    return 'Username cannot be only whitespace';
+  }
+  return true;
+}
+
+function validateUsername(value: any) {
+  if (!value) {
+    return 'Username is required';
+  }
+  if (value.length < 3 || value.length > 48) {
+    return 'Username must be between 3 and 48 characters';
+  }
+
+  return true;
 }
 </script>
 
@@ -29,18 +56,21 @@ async function login() {
       </header>
       <main>
         <BaseCard>
-          <form>
+          <Form @submit="onSubmit">
             <div class="form-field">
               <label for="username">Username</label>
-              <input type="text" id="username" v-model.trim="userName" />
+              <Field type="text" name="username" id="username"
+                           :rules="validateUsername"/>
+              <ErrorMessage name="username" class="text-primary" />
             </div>
             <div class="form-field">
               <label for="password">Password</label>
-              <input type="password" id="password" v-model="password" />
+              <Field type="password" name="password" id="password"
+                           :rules="validatePassword"/>
+              <ErrorMessage name="password" class="text-primary" />
             </div>
-            <button type="submit" class="btn w-full bg-primary"
-                          @click.prevent="login" >Sign in</button>
-          </form>
+            <button class="btn w-full bg-primary">Sign in</button>
+          </Form>
         </BaseCard>
       </main>
     </div>
