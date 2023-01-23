@@ -9,15 +9,13 @@ import { Form, Field, ErrorMessage } from 'vee-validate';
 
 const store = useMatchaStore();
 
-const userName = ref('');
-const password = ref('');
 const router = useRouter();
 
-async function onSubmit() {
+async function onSubmit(values: any) {
   try {
     let res = await axios.post('/api/auth/login', {
-      login: userName.value,
-      password: password.value,
+      login: values.username,
+      password: values.password,
     })
     store.id = res.data.id;
     router.push('/');
