@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 
@@ -110,6 +111,7 @@ import ft.framework.schedule.impl.WispTaskScheduler;
 import ft.framework.swagger.SwaggerBuilder;
 import ft.framework.swagger.controller.SwaggerController;
 import ft.framework.trace.filter.LoggingFilter;
+import ft.framework.util.StringTrimDeserializer;
 import ft.framework.validation.ValidationException;
 import ft.framework.validation.Validator;
 import ft.framework.websocket.WebSocketHandler;
@@ -125,6 +127,15 @@ import okhttp3.OkHttpClient;
 @Slf4j
 public class Matcha {
 	
+	@SuppressWarnings("serial")
+	public static class MatchaJacksonModule extends SimpleModule {
+		
+		public MatchaJacksonModule() {
+			addDeserializer(String.class, new StringTrimDeserializer());
+		}
+		
+	}
+	
 	@SneakyThrows
 	public static void main(String[] args) {
 		try {
@@ -135,7 +146,8 @@ public class Matcha {
 			
 			final var objectMapper = new ObjectMapper()
 				.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-				.registerModule(new JavaTimeModule());
+				.registerModule(new JavaTimeModule())
+				.registerModule(new MatchaJacksonModule());
 			
 			final var httpClient = new OkHttpClient.Builder()
 				.build();
@@ -237,7 +249,7 @@ public class Matcha {
 			
 			final var scheduledFactory = new ScheduledFactory(taskScheduler);
 			services.forEach(scheduledFactory::scan);
-
+			
 			final var locationMapper = new LocationMapper();
 			final var pictureMapper = new PictureMapper(pictureService);
 			final var userMapper = new UserMapper(relationshipService, pictureService, pictureMapper, heartbeatService, locationService, locationMapper);
