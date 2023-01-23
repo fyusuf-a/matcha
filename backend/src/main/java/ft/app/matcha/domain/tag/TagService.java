@@ -19,6 +19,10 @@ public class TagService {
 		return repository.findById(id);
 	}
 	
+	public Page<Tag> findAll(Pageable pageable) {
+		return repository.findAll(pageable);
+	}
+	
 	public Page<Tag> search(String query, Pageable pageable) {
 		return repository.findAllByNameLike(query, pageable);
 	}

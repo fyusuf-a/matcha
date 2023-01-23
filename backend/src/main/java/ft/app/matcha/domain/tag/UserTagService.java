@@ -26,10 +26,10 @@ public class UserTagService {
 		return repository.findAllByTag(tag, pageable).map(UserTag::getUser);
 	}
 	
-	public UserTag add(User user, Tag tag) {
+	public boolean add(User user, Tag tag) {
 		final var existing = repository.findByUserAndTag(user, tag);
 		if (existing.isPresent()) {
-			return existing.get();
+			return false;
 		}
 		
 		final var count = repository.countByUserAndTag(user, tag);
@@ -37,16 +37,22 @@ public class UserTagService {
 			throw new MaximumTagCountException(maxTagCount);
 		}
 		
-		return repository.save(
+		repository.save(
 			new UserTag()
 				.setUser(user)
 				.setTag(tag)
 				.setCreatedAt(LocalDateTime.now())
 		);
+		
+		return true;
 	}
 	
 	public boolean remove(User user, Tag tag) {
 		return repository.deleteAllByUserAndTag(user, tag) != 0;
+	}
+	
+	public long countByTag(Tag tag) {
+		return repository.countByTag(tag);
 	}
 	
 }

@@ -2,13 +2,14 @@ package ft.app.matcha.web;
 
 import ft.app.matcha.domain.tag.Tag;
 import ft.app.matcha.domain.tag.TagService;
-import ft.app.matcha.domain.tag.UserTag;
 import ft.app.matcha.domain.tag.UserTagService;
 import ft.app.matcha.domain.tag.exception.TagNotFoundException;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserService;
 import ft.app.matcha.domain.user.exception.OnlyYourselfException;
 import ft.app.matcha.domain.user.exception.UserNotFoundException;
+import ft.app.matcha.web.dto.TagDto;
+import ft.app.matcha.web.map.TagMapper;
 import ft.framework.mvc.annotation.Authenticated;
 import ft.framework.mvc.annotation.Controller;
 import ft.framework.mvc.annotation.DeleteMapping;
@@ -30,22 +31,24 @@ public class UserTagController {
 	private final UserTagService userTagService;
 	private final UserService userService;
 	private final TagService tagService;
+	private final TagMapper tagMapper;
 	
 	@GetMapping
 	@ApiOperation(summary = "List user's tags.")
-	public Page<Tag> list(
+	public Page<TagDto> list(
 		Pageable pageable,
 		@Variable long userId
 	) {
 		final var user = getUser(userId);
 		
-		return userTagService.findAll(user, pageable);
+		return userTagService.findAll(user, pageable)
+			.map(tagMapper::toDto);
 	}
 	
 	@Authenticated
 	@PostMapping(path = "{tagId}")
 	@ApiOperation(summary = "Add a tag to the user's tags.")
-	public UserTag add(
+	public boolean add(
 		@Variable long userId,
 		@Variable long tagId,
 		@Principal User user

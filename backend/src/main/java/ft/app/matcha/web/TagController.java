@@ -5,7 +5,9 @@ import ft.app.matcha.domain.tag.TagService;
 import ft.app.matcha.domain.tag.UserTagService;
 import ft.app.matcha.domain.tag.exception.TagNotFoundException;
 import ft.app.matcha.domain.user.User;
+import ft.app.matcha.web.dto.TagDto;
 import ft.app.matcha.web.form.TagCreateForm;
+import ft.app.matcha.web.map.TagMapper;
 import ft.framework.mvc.annotation.Body;
 import ft.framework.mvc.annotation.Controller;
 import ft.framework.mvc.annotation.GetMapping;
@@ -18,6 +20,7 @@ import ft.framework.mvc.domain.Pageable;
 import ft.framework.swagger.annotation.ApiOperation;
 import ft.framework.validation.annotation.Valid;
 import lombok.RequiredArgsConstructor;
+import spark.utils.StringUtils;
 
 @Controller
 @RequestMapping(path = "/tags")
@@ -26,31 +29,43 @@ public class TagController {
 	
 	private final TagService tagService;
 	private final UserTagService userTagService;
+	private final TagMapper tagMapper;
 	
 	@GetMapping
 	@ApiOperation(summary = "List tags with a query.")
-	public Page<Tag> list(
+	public Page<TagDto> list(
 		Pageable pageable,
-		@Query String query
+		@Query(required = false) String query
 	) {
-		return tagService.search(query, pageable);
+		return doList(pageable, query)
+			.map(tagMapper::toDto);
+	}
+	
+	public Page<Tag> doList(Pageable pageable, String query) {
+		if (StringUtils.isNotBlank(query)) {
+			return tagService.search(query, pageable);
+		}
+		
+		return tagService.findAll(pageable);
 	}
 	
 	@PostMapping
 	@ApiOperation(summary = "Create a tag.")
-	public Tag create(
+	public TagDto create(
 		@Body @Valid TagCreateForm form
 	) {
-		return tagService.create(form.getName(), form.getColor());
+		final var tag = tagService.create(form.getName(), form.getColor());
+		return tagMapper.toDto(tag);
 	}
 	
 	@GetMapping(path = "{tagId}")
 	@ApiOperation(summary = "Show a tag.")
-	public Tag show(
+	public TagDto show(
 		@Variable long tagId
 	) {
-		return tagService.find(tagId)
-			.orElseThrow(() -> new TagNotFoundException(tagId));
+		final var tag = getTag(tagId);
+		
+		return tagMapper.toDto(tag);
 	}
 	
 	@GetMapping(path = "{tagId}/users")
@@ -59,9 +74,14 @@ public class TagController {
 		Pageable pageable,
 		@Variable long tagId
 	) {
-		final var tag = show(tagId);
+		final var tag = getTag(tagId);
 		
 		return userTagService.findAll(tag, pageable);
+	}
+	
+	public Tag getTag(long tagId) {
+		return tagService.find(tagId)
+			.orElseThrow(() -> new TagNotFoundException(tagId));
 	}
 	
 }

@@ -78,6 +78,7 @@ import ft.app.matcha.web.WebSocketController;
 import ft.app.matcha.web.map.LocationMapper;
 import ft.app.matcha.web.map.PictureMapper;
 import ft.app.matcha.web.map.ReportMapper;
+import ft.app.matcha.web.map.TagMapper;
 import ft.app.matcha.web.map.UserMapper;
 import ft.app.matcha.web.map.VisitMapper;
 import ft.framework.convert.service.ConvertionService;
@@ -256,6 +257,7 @@ public class Matcha {
 			final var userMapper = new UserMapper(relationshipService, pictureService, pictureMapper, heartbeatService, locationService, locationMapper);
 			final var reportMapper = new ReportMapper(userMapper);
 			final var visitMapper = new VisitMapper(userMapper);
+			final var tagMapper = new TagMapper(userTagService);
 			
 			final var mvcConfiguration = configureMvc(objectMapper, validator, convertionService, jwtAuthenticator, authService);
 			final var routeRegistry = new RouteRegistry(mvcConfiguration);
@@ -264,8 +266,8 @@ public class Matcha {
 			routeRegistry.add(new PictureController(userService, pictureService, pictureMapper));
 			routeRegistry.add(new UserController(userService, userMapper));
 			routeRegistry.add(new LikeController(relationshipService, userService, userMapper));
-			routeRegistry.add(new TagController(tagService, userTagService));
-			routeRegistry.add(new UserTagController(userTagService, userService, tagService));
+			routeRegistry.add(new TagController(tagService, userTagService, tagMapper));
+			routeRegistry.add(new UserTagController(userTagService, userService, tagService, tagMapper));
 			routeRegistry.add(new MessageController(messageService, userService));
 			routeRegistry.add(new NotificationController(notificationService));
 			routeRegistry.add(new ReportController(reportService, userService, reportMapper));

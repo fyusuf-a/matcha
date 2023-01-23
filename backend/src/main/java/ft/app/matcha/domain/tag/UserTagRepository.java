@@ -35,6 +35,10 @@ public class UserTagRepository extends Repository<UserTag, Long> {
 		return deleteAllBy(createByUserAndTagPredicate(user, tag));
 	}
 	
+	public long countByTag(Tag tag) {
+		return countBy(builder.equals(UserTag.Fields.tag, tag));
+	}
+	
 	public Predicate<UserTag> createByUserAndTagPredicate(User user, Tag tag) {
 		return builder.and(
 			builder.equals(UserTag.Fields.user, user),

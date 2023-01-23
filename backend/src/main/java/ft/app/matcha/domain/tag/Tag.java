@@ -9,8 +9,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.experimental.FieldNameConstants;
@@ -36,10 +34,6 @@ public class Tag {
 	private String color;
 	
 	@Column(nullable = false)
-	private long usage;
-	
-	@Column(nullable = false)
-	@JsonFormat(shape = JsonFormat.Shape.STRING)
 	private LocalDateTime createdAt;
 	
 }
