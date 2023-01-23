@@ -11,6 +11,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.PathItem.HttpMethod;
 import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
@@ -42,6 +43,11 @@ public class SwaggerBuilder {
 			});
 		
 		swagger.getTags().sort(Comparator.comparing(Tag::getName));
+		
+		@SuppressWarnings("rawtypes")
+		final var schemas = new TreeMap<String, Schema>();
+		schemas.putAll(swagger.getComponents().getSchemas());
+		swagger.getComponents().setSchemas(schemas);
 		
 		return swagger;
 	}
