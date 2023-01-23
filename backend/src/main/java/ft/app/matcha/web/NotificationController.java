@@ -43,31 +43,31 @@ public class NotificationController {
 	}
 	
 	@Authenticated
-	@GetMapping(path = "{id}")
+	@GetMapping(path = "{notificationId}")
 	@ApiOperation(summary = "Show a notification.")
 	public Notification show(
-		@Variable long id,
+		@Variable long notificationId,
 		@Principal User currentUser
 	) {
-		final var notification = notificationService.find(id)
-			.orElseThrow(() -> new NotificationNotFoundException(id));
+		final var notification = notificationService.find(notificationId)
+			.orElseThrow(() -> new NotificationNotFoundException(notificationId));
 		
 		if (notification.getUser().getId() != currentUser.getId()) {
-			throw new InvalidNotificationOwnerException(id);
+			throw new InvalidNotificationOwnerException(notificationId);
 		}
 		
 		return notification;
 	}
 	
 	@Authenticated
-	@PatchMapping(path = "{id}")
+	@PatchMapping(path = "{notificationId}")
 	@ApiOperation(summary = "Update a notification.")
 	public Notification patch(
-		@Variable long id,
+		@Variable long notificationId,
 		@Body @Valid NotificationPatchForm form,
 		@Principal User currentUser
 	) {
-		final var notification = show(id, currentUser);
+		final var notification = show(notificationId, currentUser);
 		
 		Optional.ofNullable(form.getRead()).ifPresent((read) -> {
 			notification.setRead(read);

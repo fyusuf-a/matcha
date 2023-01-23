@@ -44,22 +44,22 @@ public class TagController {
 		return tagService.create(form.getName(), form.getColor());
 	}
 	
-	@GetMapping(path = "{id}")
+	@GetMapping(path = "{tagId}")
 	@ApiOperation(summary = "Show a tag.")
 	public Tag show(
-		@Variable long id
+		@Variable long tagId
 	) {
-		return tagService.find(id)
-			.orElseThrow(() -> new TagNotFoundException(id));
+		return tagService.find(tagId)
+			.orElseThrow(() -> new TagNotFoundException(tagId));
 	}
 	
-	@GetMapping(path = "{id}/users")
+	@GetMapping(path = "{tagId}/users")
 	@ApiOperation(summary = "Show a tag.")
 	public Page<User> listUsers(
 		Pageable pageable,
-		@Variable long id
+		@Variable long tagId
 	) {
-		final var tag = show(id);
+		final var tag = show(tagId);
 		
 		return userTagService.findAll(tag, pageable);
 	}

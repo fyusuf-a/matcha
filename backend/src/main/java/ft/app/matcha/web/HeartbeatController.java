@@ -23,7 +23,7 @@ public class HeartbeatController {
 	@GetMapping(path = "/log")
 	@Authenticated
 	@ApiOperation(summary = "Log your presence")
-	public Heartbeat self(
+	public Heartbeat log(
 		@Principal User principal,
 		InetAddress inetAddress
 	) {

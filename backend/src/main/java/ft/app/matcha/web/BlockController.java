@@ -4,6 +4,7 @@ import ft.app.matcha.domain.relationship.Relationship;
 import ft.app.matcha.domain.relationship.RelationshipService;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserService;
+import ft.app.matcha.domain.user.exception.OnlyYourselfException;
 import ft.app.matcha.domain.user.exception.UserNotFoundException;
 import ft.app.matcha.web.dto.UserDto;
 import ft.app.matcha.web.form.LikeForm;
@@ -23,7 +24,7 @@ import ft.framework.swagger.annotation.ApiOperation;
 import lombok.RequiredArgsConstructor;
 
 @Controller
-@RequestMapping(path = "/users/@me")
+@RequestMapping(path = "/users/{userId}/blocks")
 @RequiredArgsConstructor
 @Authenticated
 public class BlockController {
@@ -32,42 +33,53 @@ public class BlockController {
 	private final UserService userService;
 	private final UserMapper userMapper;
 	
-	@GetMapping(path = "blocks")
-	@ApiOperation(summary = "List users that you blocked.")
+	@GetMapping
+	@ApiOperation(summary = "List users that a user blocked.")
 	public Page<UserDto> list(
+		@Variable long userId,
 		Pageable pageable,
-		@Principal User currentUser
+		@Principal User user
 	) {
-		final var user = currentUser;
+		ensureSelf(userId, user);
 		
 		return relationshipService.findAllByUser(user, Relationship.Type.BLOCK, pageable)
-			.map((relationship) -> userMapper.toDto(relationship.getPeer(), currentUser));
+			.map((relationship) -> userMapper.toDto(relationship.getPeer(), user));
 	}
 	
-	@PostMapping(path = "blocks")
-	@ApiOperation(summary = "Block a peer.")
-	public UserDto like(
+	@PostMapping
+	@ApiOperation(summary = "Block a user.")
+	public UserDto block(
+		@Variable long userId,
 		@Body LikeForm form,
-		@Principal User currentUser
+		@Principal User user
 	) {
-		final var user = currentUser;
+		ensureSelf(userId, user);
+		
 		final var peer = getUser(form.getPeerId());
 		final var block = relationshipService.block(user, peer);
 		
-		return userMapper.toDto(block.getPeer(), currentUser);
+		return userMapper.toDto(block.getPeer(), user);
 	}
 	
 	@Authenticated
-	@DeleteMapping(path = "blocks/{peerId}")
+	@DeleteMapping(path = "{peerId}")
 	@ApiOperation(summary = "Unblock a peer.")
-	public void unlike(
+	public void unblock(
+		@Variable long userId,
 		@Variable long peerId,
-		@Principal User currentUser
+		@Principal User user
 	) {
-		final var user = currentUser;
+		ensureSelf(userId, user);
+		
 		final var peer = getUser(peerId);
 		
 		relationshipService.unblock(user, peer);
+	}
+	
+	public void ensureSelf(long userId, User currentUser) {
+		if (userId != currentUser.getId()) {
+			throw new OnlyYourselfException();
+		}
 	}
 	
 	public User getUser(long id) {

@@ -23,7 +23,7 @@ import ft.framework.swagger.annotation.ApiOperation;
 import lombok.RequiredArgsConstructor;
 
 @Controller
-@RequestMapping(path = "/users/{id}/tags")
+@RequestMapping(path = "/users/{userId}/tags")
 @RequiredArgsConstructor
 public class UserTagController {
 	
@@ -35,9 +35,9 @@ public class UserTagController {
 	@ApiOperation(summary = "List user's tags.")
 	public Page<Tag> list(
 		Pageable pageable,
-		@Variable long id
+		@Variable long userId
 	) {
-		final var user = getUser(id, null);
+		final var user = getUser(userId);
 		
 		return userTagService.findAll(user, pageable);
 	}
@@ -46,11 +46,12 @@ public class UserTagController {
 	@PostMapping(path = "{tagId}")
 	@ApiOperation(summary = "Add a tag to the user's tags.")
 	public UserTag add(
-		@Variable long id,
+		@Variable long userId,
 		@Variable long tagId,
-		@Principal User currentUser
+		@Principal User user
 	) {
-		final var user = getUser(id, currentUser);
+		ensureSelf(userId, user);
+		
 		final var tag = getTag(tagId);
 		
 		return userTagService.add(user, tag);
@@ -60,32 +61,31 @@ public class UserTagController {
 	@DeleteMapping(path = "{tagId}")
 	@ApiOperation(summary = "Remove a tag from the user's tags.")
 	public boolean remove(
-		@Variable long id,
+		@Variable long userId,
 		@Variable long tagId,
-		@Principal User currentUser
+		@Principal User user
 	) {
-		final var user = getUser(id, currentUser);
+		ensureSelf(userId, user);
+		
 		final var tag = getTag(tagId);
 		
 		return userTagService.remove(user, tag);
 	}
 	
-	public User getUser(long id, User currentUser) {
-		if (currentUser != null) {
-			if (currentUser.getId() == id) {
-				return currentUser;
-			}
-			
-			throw new OnlyYourselfException();
-		}
-		
-		return userService.find(id)
-			.orElseThrow(() -> new UserNotFoundException(id));
+	public User getUser(long userId) {
+		return userService.find(userId)
+			.orElseThrow(() -> new UserNotFoundException(userId));
 	}
 	
-	public Tag getTag(long id) {
-		return tagService.find(id)
-			.orElseThrow(() -> new TagNotFoundException(id));
+	public Tag getTag(long tagId) {
+		return tagService.find(tagId)
+			.orElseThrow(() -> new TagNotFoundException(tagId));
+	}
+	
+	public void ensureSelf(long userId, User currentUser) {
+		if (userId != currentUser.getId()) {
+			throw new OnlyYourselfException();
+		}
 	}
 	
 }

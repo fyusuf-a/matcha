@@ -4,6 +4,7 @@ import ft.app.matcha.domain.relationship.Relationship;
 import ft.app.matcha.domain.relationship.RelationshipService;
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserService;
+import ft.app.matcha.domain.user.exception.OnlyYourselfException;
 import ft.app.matcha.domain.user.exception.UserNotFoundException;
 import ft.app.matcha.security.UserAuthentication;
 import ft.app.matcha.web.dto.UserDto;
@@ -25,7 +26,7 @@ import ft.framework.swagger.annotation.ApiOperation;
 import lombok.RequiredArgsConstructor;
 
 @Controller
-@RequestMapping(path = "/users")
+@RequestMapping(path = "/users/{userId}")
 @RequiredArgsConstructor
 public class LikeController {
 	
@@ -33,7 +34,7 @@ public class LikeController {
 	private final UserService userService;
 	private final UserMapper userMapper;
 	
-	@GetMapping(path = "{userId}/likers")
+	@GetMapping(path = "likers")
 	@ApiOperation(summary = "List users that liked this user.")
 	public Page<UserDto> listLikers(
 		Pageable pageable,
@@ -47,7 +48,7 @@ public class LikeController {
 			.map((relationship) -> userMapper.toDto(relationship.getUser(), principal));
 	}
 	
-	@GetMapping(path = "{userId}/likes")
+	@GetMapping(path = "likes")
 	@ApiOperation(summary = "List users that this user has liked.")
 	public Page<UserDto> list(
 		Pageable pageable,
@@ -62,30 +63,40 @@ public class LikeController {
 	}
 	
 	@Authenticated
-	@PostMapping(path = "@me/likes")
+	@PostMapping(path = "likes")
 	@ApiOperation(summary = "Like a peer.")
 	public UserDto like(
+		@Variable long userId,
 		@Body LikeForm form,
-		@Principal User currentUser
+		@Principal User user
 	) {
-		final var user = currentUser;
+		ensureSelf(userId, user);
+		
 		final var peer = getUser(form.getPeerId());
 		final var like = relationshipService.like(user, peer);
 		
-		return userMapper.toDto(like.getPeer(), currentUser);
+		return userMapper.toDto(like.getPeer(), user);
 	}
 	
 	@Authenticated
-	@DeleteMapping(path = "@me/likes/{peerId}")
+	@DeleteMapping(path = "likes/{peerId}")
 	@ApiOperation(summary = "Unlike a peer.")
 	public void unlike(
+		@Variable long userId,
 		@Variable long peerId,
-		@Principal User currentUser
+		@Principal User user
 	) {
-		final var user = currentUser;
+		ensureSelf(userId, user);
+		
 		final var peer = getUser(peerId);
 		
 		relationshipService.unlike(user, peer);
+	}
+	
+	public void ensureSelf(long userId, User currentUser) {
+		if (userId != currentUser.getId()) {
+			throw new OnlyYourselfException();
+		}
 	}
 	
 	public User getUser(long id) {

@@ -91,23 +91,23 @@ public class PictureController {
 		}
 	}
 	
-	@GetMapping(path = "{id}")
+	@GetMapping(path = "{pictureId}")
 	@ApiOperation(summary = "Show a picture.")
 	public PictureDto show(
-		@Variable long id
+		@Variable long pictureId
 	) {
-		final var picture = getPicture(id);
+		final var picture = getPicture(pictureId);
 		
 		return pictureMapper.toDto(picture);
 	}
 	
-	@PatchMapping(path = "{id}")
+	@PatchMapping(path = "{pictureId}")
 	@ApiOperation(summary = "Update a picture.")
 	public PictureDto patch(
-		@Variable long id,
+		@Variable long pictureId,
 		@Body @Valid PicturePatchForm form
 	) {
-		final var picture = getPicture(id);
+		final var picture = getPicture(pictureId);
 		
 		if (Boolean.TRUE.equals(form.getIsDefault())) {
 			pictureService.setDefault(picture);
@@ -116,36 +116,36 @@ public class PictureController {
 		return pictureMapper.toDto(picture);
 	}
 	
-	@GetMapping(path = "{id}/view", produce = MediaTypes.PNG)
+	@GetMapping(path = "{pictureId}/view", produce = MediaTypes.PNG)
 	@ApiOperation(summary = "View a picture.")
 	public InputStream view(
-		@Variable long id
+		@Variable long pictureId
 	) {
-		final var picture = getPicture(id);
+		final var picture = getPicture(pictureId);
 		
 		return pictureService.read(picture);
 	}
 	
 	@Authenticated
 	@ResponseStatus(HttpStatus.ACCEPTED_202)
-	@DeleteMapping(path = "{id}")
+	@DeleteMapping(path = "{pictureId}")
 	@ApiOperation(summary = "Delete a picture.")
 	public void delete(
-		@Variable long id,
+		@Variable long pictureId,
 		@Principal User user
 	) {
-		final var picture = getPicture(id);
+		final var picture = getPicture(pictureId);
 		
 		if (picture.getUser().getId() != user.getId()) {
-			throw new InvalidPictureOwnerException(id);
+			throw new InvalidPictureOwnerException(pictureId);
 		}
 		
 		pictureService.delete(picture);
 	}
 	
-	public Picture getPicture(long id) {
-		return pictureService.find(id)
-			.orElseThrow(() -> new PictureNotFoundException(id));
+	public Picture getPicture(long pictureId) {
+		return pictureService.find(pictureId)
+			.orElseThrow(() -> new PictureNotFoundException(pictureId));
 	}
 	
 }
