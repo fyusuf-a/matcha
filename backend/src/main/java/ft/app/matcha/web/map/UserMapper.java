@@ -4,16 +4,14 @@ import ft.app.matcha.domain.heartbeat.HeartbeatService;
 import ft.app.matcha.domain.location.LocationService;
 import ft.app.matcha.domain.picture.DefaultPicture;
 import ft.app.matcha.domain.picture.PictureService;
-import ft.app.matcha.domain.relationship.RelationshipService;
 import ft.app.matcha.domain.user.User;
-import ft.app.matcha.web.dto.RelationshipDto;
 import ft.app.matcha.web.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class UserMapper {
 	
-	private final RelationshipService relationshipService;
+	private final RelationshipMapper relationshipMapper;
 	private final PictureService pictureService;
 	private final PictureMapper pictureMapper;
 	private final HeartbeatService heartbeatService;
@@ -53,24 +51,12 @@ public class UserMapper {
 	}
 	
 	private UserDto toDtoAuthenticated(User user, User principal) {
-		final var relationship = getRelationship(principal, user);
+		final var relationship = relationshipMapper.toDto(principal, user);
+		final var email = user.getId() == principal.getId() ? user.getEmail() : null;
 		
 		return toDto(user)
+			.setEmail(email)
 			.setRelationship(relationship);
-	}
-	
-	public RelationshipDto getRelationship(User user, User peer) {
-		if (user.getId() == peer.getId()) {
-			return null;
-		}
-		
-		final var relationship = relationshipService.find(user, peer).orElse(null);
-		if (relationship == null) {
-			return null;
-		}
-		
-		final var mutual = relationshipService.isMutual(relationship);
-		return new RelationshipDto(relationship.getType(), mutual, relationship.getCreatedAt());
 	}
 	
 }

@@ -45,8 +45,7 @@ public class AuthController {
 	public UserDto self(
 		@Principal User principal
 	) {
-		return userMapper.toDto(principal)
-			.setEmail(principal.getEmail());
+		return userMapper.toDto(principal, principal);
 	}
 	
 	@PostMapping(path = "/login")

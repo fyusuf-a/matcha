@@ -77,6 +77,7 @@ import ft.app.matcha.web.VisitController;
 import ft.app.matcha.web.WebSocketController;
 import ft.app.matcha.web.map.LocationMapper;
 import ft.app.matcha.web.map.PictureMapper;
+import ft.app.matcha.web.map.RelationshipMapper;
 import ft.app.matcha.web.map.ReportMapper;
 import ft.app.matcha.web.map.TagMapper;
 import ft.app.matcha.web.map.UserMapper;
@@ -254,7 +255,8 @@ public class Matcha {
 			
 			final var locationMapper = new LocationMapper();
 			final var pictureMapper = new PictureMapper(pictureService);
-			final var userMapper = new UserMapper(relationshipService, pictureService, pictureMapper, heartbeatService, locationService, locationMapper);
+			final var relationshipMapper = new RelationshipMapper(relationshipService);
+			final var userMapper = new UserMapper(relationshipMapper, pictureService, pictureMapper, heartbeatService, locationService, locationMapper);
 			final var reportMapper = new ReportMapper(userMapper);
 			final var visitMapper = new VisitMapper(userMapper);
 			final var tagMapper = new TagMapper(userTagService);
@@ -266,7 +268,7 @@ public class Matcha {
 			routeRegistry.add(new PictureController(userService, pictureService, pictureMapper));
 			routeRegistry.add(new UserController(userService, userMapper));
 			routeRegistry.add(new LikeController(relationshipService, userService, userMapper));
-			routeRegistry.add(new TagController(tagService, userTagService, tagMapper));
+			routeRegistry.add(new TagController(tagService, userTagService, tagMapper, userMapper));
 			routeRegistry.add(new UserTagController(userTagService, userService, tagService, tagMapper));
 			routeRegistry.add(new MessageController(messageService, userService));
 			routeRegistry.add(new NotificationController(notificationService));

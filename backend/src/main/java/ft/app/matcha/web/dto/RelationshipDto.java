@@ -4,20 +4,30 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-import ft.app.matcha.domain.relationship.Relationship;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 
 @Data
+@Accessors(chain = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class RelationshipDto {
 	
-	private Relationship.Type type;
+	private Type type;
 	private boolean mutual;
 	
 	@JsonFormat(shape = JsonFormat.Shape.STRING)
 	private LocalDateTime createdAt;
+	
+	public enum Type {
+		
+		LIKE,
+		BLOCK,
+		STRANGER,
+		YOURSELF;
+	
+	}
 	
 }

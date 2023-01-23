@@ -62,7 +62,7 @@ public class UserController {
 	@Authenticated
 	@PatchMapping(path = "{userId}")
 	@ApiOperation(summary = "Update a user.")
-	public User patchMe(
+	public UserDto patch(
 		@Variable long userId,
 		@Valid @Body UserPatchForm form,
 		@Principal User user
@@ -77,7 +77,9 @@ public class UserController {
 		Optional.ofNullable(form.getGender()).ifPresent(user::setGender);
 		Optional.ofNullable(form.getSexualOrientation()).ifPresent(user::setSexualOrientation);
 		
-		return userService.save(user);
+		userService.save(user);
+		
+		return userMapper.toDto(user);
 	}
 	
 }

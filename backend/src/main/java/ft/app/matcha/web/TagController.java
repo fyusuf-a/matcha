@@ -4,10 +4,11 @@ import ft.app.matcha.domain.tag.Tag;
 import ft.app.matcha.domain.tag.TagService;
 import ft.app.matcha.domain.tag.UserTagService;
 import ft.app.matcha.domain.tag.exception.TagNotFoundException;
-import ft.app.matcha.domain.user.User;
 import ft.app.matcha.web.dto.TagDto;
+import ft.app.matcha.web.dto.UserDto;
 import ft.app.matcha.web.form.TagCreateForm;
 import ft.app.matcha.web.map.TagMapper;
+import ft.app.matcha.web.map.UserMapper;
 import ft.framework.mvc.annotation.Body;
 import ft.framework.mvc.annotation.Controller;
 import ft.framework.mvc.annotation.GetMapping;
@@ -30,6 +31,7 @@ public class TagController {
 	private final TagService tagService;
 	private final UserTagService userTagService;
 	private final TagMapper tagMapper;
+	private final UserMapper userMapper;
 	
 	@GetMapping
 	@ApiOperation(summary = "List tags with a query.")
@@ -70,13 +72,14 @@ public class TagController {
 	
 	@GetMapping(path = "{tagId}/users")
 	@ApiOperation(summary = "Show a tag.")
-	public Page<User> listUsers(
+	public Page<UserDto> listUsers(
 		Pageable pageable,
 		@Variable long tagId
 	) {
 		final var tag = getTag(tagId);
 		
-		return userTagService.findAll(tag, pageable);
+		return userTagService.findAll(tag, pageable)
+			.map(userMapper::toDto);
 	}
 	
 	public Tag getTag(long tagId) {
