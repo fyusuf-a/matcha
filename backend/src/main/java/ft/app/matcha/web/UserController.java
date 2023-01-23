@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import ft.app.matcha.domain.user.User;
 import ft.app.matcha.domain.user.UserService;
+import ft.app.matcha.domain.user.exception.OnlyYourselfException;
 import ft.app.matcha.domain.user.exception.UserNotFoundException;
 import ft.app.matcha.security.UserAuthentication;
 import ft.app.matcha.web.dto.UserDto;
@@ -45,26 +46,31 @@ public class UserController {
 			.map((user) -> userMapper.toDto(user, principal));
 	}
 	
-	@GetMapping(path = "{id}")
-	@ApiOperation(summary = "Show an user.")
+	@GetMapping(path = "{userId}")
+	@ApiOperation(summary = "Show a user.")
 	public UserDto show(
-		@Variable long id,
+		@Variable long userId,
 		Authentication authentication
 	) {
 		final var principal = UserAuthentication.getUser(authentication);
 		
-		return userService.find(id)
+		return userService.find(userId)
 			.map((user) -> userMapper.toDto(user, principal))
-			.orElseThrow(() -> new UserNotFoundException(id));
+			.orElseThrow(() -> new UserNotFoundException(userId));
 	}
 	
 	@Authenticated
-	@PatchMapping(path = "@me")
-	@ApiOperation(summary = "Update yourself.")
+	@PatchMapping(path = "{userId}")
+	@ApiOperation(summary = "Update a user.")
 	public User patchMe(
+		@Variable long userId,
 		@Valid @Body UserPatchForm form,
 		@Principal User user
 	) {
+		if (userId != user.getId()) {
+			throw new OnlyYourselfException();
+		}
+		
 		Optional.ofNullable(form.getFirstName()).ifPresent(user::setFirstName);
 		Optional.ofNullable(form.getLastName()).ifPresent(user::setLastName);
 		Optional.ofNullable(form.getBiography()).ifPresent(user::setBiography);
