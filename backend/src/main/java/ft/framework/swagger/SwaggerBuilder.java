@@ -11,6 +11,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.PathItem.HttpMethod;
 import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -39,6 +40,8 @@ public class SwaggerBuilder {
 				}
 				
 			});
+		
+		swagger.getTags().sort(Comparator.comparing(Tag::getName));
 		
 		return swagger;
 	}
