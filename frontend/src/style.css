@@ -13,7 +13,7 @@
     --color-primary: 255 65 129;    /* #ff4181 */
 
     --color-secondary: 244 143 179; /* #f48fb3 */
-    --color-secondary: 221 114 48; /* #dd7230 */
+    --color-alert: 221 114 48; /* #dd7230 */
   }
 
   html {
