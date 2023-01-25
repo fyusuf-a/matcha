@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onBeforeMount, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useMatchaStore } from '@/store';
 import axios, { Axios } from 'axios';
 import { AxiosError } from 'axios';
@@ -13,11 +13,7 @@ const router = useRouter();
 
 async function onSubmit(values: any) {
   try {
-    let res = await axios.post('/api/auth/login', {
-      login: values.username,
-      password: values.password,
-    })
-    store.id = res.data.id;
+    await store.login(values.username, values.password);
     router.push('/');
   } catch (err: any) {
     console.error(err.message);
@@ -41,9 +37,14 @@ function validateUsername(value: any) {
   if (value.length < 3 || value.length > 48) {
     return 'Username must be between 3 and 48 characters';
   }
-
   return true;
 }
+
+onMounted(() => {
+  if (store.isLoggedIn) {
+    router.push('/');
+  }
+});
 </script>
 
 <template>
